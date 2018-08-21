@@ -20,12 +20,13 @@ import (
 	"github.com/afeeblechild/aws-go-tool/lib/ec2"
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 // ec2Cmd represents the ec2 command
 var ec2Cmd = &cobra.Command{
 	Use:   "ec2",
-	Short: "A brief description of your command",
+	Short: "For use with interacting with the ec2 service",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -33,14 +34,13 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
 		fmt.Println("ec2 called")
 	},
 }
 
 var snapshotsListCmd = &cobra.Command{
 	Use:   "snapshotslist",
-	Short: "A brief description of your command",
+	Short: "Will get a report of the snapshots for all given accounts",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -63,7 +63,7 @@ to quickly create a Cobra application.`,
 		if TagFile != "" {
 			tags, err = utils.ReadProfilesFile(TagFile)
 			if err != nil {
-				//TODO output to log file
+				log.Println("could not open tagfile:", err, "\ncontinuing without tags in output")
 				fmt.Println("could not open tagFile:", err)
 				fmt.Println("continuing without tags in output")
 			}
@@ -79,7 +79,7 @@ to quickly create a Cobra application.`,
 
 var imagesListCmd = &cobra.Command{
 	Use:   "imageslist",
-	Short: "A brief description of your command",
+	Short: "Will get a report of all amis for all given accounts",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -102,7 +102,7 @@ to quickly create a Cobra application.`,
 		if TagFile != "" {
 			tags, err = utils.ReadProfilesFile(TagFile)
 			if err != nil {
-				//TODO output to log file
+				log.Println("could not open tagFIl:", err, "\ncontinuuing without tags in output")
 				fmt.Println("could not open tagFile:", err)
 				fmt.Println("continuing without tags in output")
 			}
@@ -118,7 +118,7 @@ to quickly create a Cobra application.`,
 
 var instancesListCmd = &cobra.Command{
 	Use:   "instanceslist",
-	Short: "A brief description of your command",
+	Short: "Will get a report of all instances for all given accounts",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -141,7 +141,7 @@ to quickly create a Cobra application.`,
 		if TagFile != "" {
 			tags, err = utils.ReadProfilesFile(TagFile)
 			if err != nil {
-				//TODO output to log file
+				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
 				fmt.Println("could not open tagFile:", err)
 				fmt.Println("continuing without tags in output")
 			}

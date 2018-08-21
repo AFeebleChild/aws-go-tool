@@ -70,6 +70,7 @@ func init() {
 	// when this action is called directly.
 	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
+	//TODO add flag checks to ensure the required flags are set
 	RootCmd.PersistentFlags().StringVarP(&AccessType, "accessType", "a", "", "either role or profile")
 	RootCmd.PersistentFlags().StringVarP(&ProfilesFile, "profilesFile", "p", "", "file with list of account profiles")
 	RootCmd.PersistentFlags().StringVarP(&TagFile, "tagFile", "g", "", "file with list of tags to add to output")
