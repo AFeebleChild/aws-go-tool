@@ -69,8 +69,7 @@ func CreateFile(name string) (file *os.File, err error) {
 }
 
 //ReadFile will open a file, and return a string slice with each line as a string
-//It is designed to be used for a file with a profile name on each line
-func ReadProfilesFile(path string) ([]string, error) {
+func ReadFile(path string) ([]string, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -80,6 +79,10 @@ func ReadProfilesFile(path string) ([]string, error) {
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
+		//Remove empty lines from the report
+		if scanner.Text() == "" {
+			continue
+		}
 		lines = append(lines, scanner.Text())
 	}
 	return lines, scanner.Err()
@@ -89,7 +92,7 @@ func ReadProfilesFile(path string) ([]string, error) {
 //Will also check the Geo location of the IP if "geo" is true
 func ParseELBLog(path string, geo bool) (ELBLogInfo, error) {
 	var info ELBLogInfo
-	lines, err := ReadProfilesFile(path)
+	lines, err := ReadFile(path)
 	if err != nil {
 		return info, err
 	}

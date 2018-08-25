@@ -171,7 +171,7 @@ func GetProfilesRoles(accounts []utils.AccountInfo) (ProfilesRoles, error) {
 //UpdateProfilesRoles will take a filename which should be the output of the GetProfilesRoles func
 //The duration parameter is the new MaxSessDuration in seconds
 func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
-	lines, err := utils.ReadProfilesFile(filename)
+	lines, err := utils.ReadFile(filename)
 	if err != nil {
 		return err
 	}

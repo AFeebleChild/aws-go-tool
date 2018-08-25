@@ -27,20 +27,14 @@ import (
 var ec2Cmd = &cobra.Command{
 	Use:   "ec2",
 	Short: "For use with interacting with the ec2 service",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("ec2 called")
+		fmt.Println("Run -h to see the help menu")
 	},
 }
 
 var snapshotsListCmd = &cobra.Command{
 	Use:   "snapshotslist",
-	Short: "Will get a report of the snapshots for all given accounts",
+	Short: "Will generate a report of all snapshots for all given accounts",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -61,9 +55,9 @@ to quickly create a Cobra application.`,
 		}
 		var tags []string
 		if TagFile != "" {
-			tags, err = utils.ReadProfilesFile(TagFile)
+			tags, err = utils.ReadFile(TagFile)
 			if err != nil {
-				log.Println("could not open tagfile:", err, "\ncontinuing without tags in output")
+				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
 				fmt.Println("could not open tagFile:", err)
 				fmt.Println("continuing without tags in output")
 			}
@@ -79,7 +73,7 @@ to quickly create a Cobra application.`,
 
 var imagesListCmd = &cobra.Command{
 	Use:   "imageslist",
-	Short: "Will get a report of all amis for all given accounts",
+	Short: "Will generate a report of all amis for all given accounts",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -100,9 +94,9 @@ to quickly create a Cobra application.`,
 		}
 		var tags []string
 		if TagFile != "" {
-			tags, err = utils.ReadProfilesFile(TagFile)
+			tags, err = utils.ReadFile(TagFile)
 			if err != nil {
-				log.Println("could not open tagFIl:", err, "\ncontinuuing without tags in output")
+				log.Println("could not open tagFile:", err, "\ncontinuuing without tags in output")
 				fmt.Println("could not open tagFile:", err)
 				fmt.Println("continuing without tags in output")
 			}
@@ -118,7 +112,7 @@ to quickly create a Cobra application.`,
 
 var instancesListCmd = &cobra.Command{
 	Use:   "instanceslist",
-	Short: "Will get a report of all instances for all given accounts",
+	Short: "Will generate a report of all instances for all given accounts",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -139,7 +133,7 @@ to quickly create a Cobra application.`,
 		}
 		var tags []string
 		if TagFile != "" {
-			tags, err = utils.ReadProfilesFile(TagFile)
+			tags, err = utils.ReadFile(TagFile)
 			if err != nil {
 				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
 				fmt.Println("could not open tagFile:", err)
@@ -155,12 +149,52 @@ to quickly create a Cobra application.`,
 	},
 }
 
+var sgsListCmd = &cobra.Command{
+	Use:   "sgslist",
+	Short: "Will generate a report of all amis for all given accounts",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		profilesSGs, err := ec2.GetProfilesSGs(accounts)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		var tags []string
+		if TagFile != "" {
+			tags, err = utils.ReadFile(TagFile)
+			if err != nil {
+				log.Println("could not open tagFile:", err, "\ncontinuuing without tags in output")
+				fmt.Println("could not open tagFile:", err)
+				fmt.Println("continuing without tags in output")
+			}
+		}
+		options := ec2.SGOptions{Tags:tags}
+		err = ec2.WriteProfilesSGs(profilesSGs, options)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(ec2Cmd)
 
 	ec2Cmd.AddCommand(snapshotsListCmd)
 	ec2Cmd.AddCommand(imagesListCmd)
 	ec2Cmd.AddCommand(instancesListCmd)
+	ec2Cmd.AddCommand(sgsListCmd)
 
 	// Here you will define your flags and configuration settings.
 

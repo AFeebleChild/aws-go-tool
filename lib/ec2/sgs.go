@@ -4,17 +4,24 @@ import (
 	"fmt"
 	"os"
 	"sync"
+	"log"
+	"encoding/csv"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"log"
 )
+
+type SGOptions struct {
+	Cidr string
+	Tags []string
+}
 
 type RegionSGs struct {
 	Region  string
 	Profile string
+	AccountID string
 	SGs     []ec2.SecurityGroup
 }
 
@@ -102,6 +109,11 @@ func GetAccountSGs(account utils.AccountInfo) (AccountSGs, error) {
 			}
 			info.Region = region
 			info.Profile = profile
+			info.AccountID, err = utils.GetAccountID(sess)
+			if err != nil {
+				log.Println("Could not get account id for", account.Profile, ":", err)
+				return
+			}
 			SGsChan <- info
 		}(region)
 	}
@@ -150,14 +162,37 @@ func GetProfilesSGs(accounts []utils.AccountInfo) (ProfilesSGs, error) {
 }
 
 //if a cidr is given, search the SGs for that rule and only print those containing the cidr
-func WriteProfilesSGs(profileSGs ProfilesSGs, cidr string) error {
-	outfile, err := utils.CreateFile("SGs.csv")
+func WriteProfilesSGs(profileSGs ProfilesSGs, options SGOptions) error {
+	cidr := options.Cidr
+	outfile, err := utils.CreateFile("sgs.csv")
 	fmt.Println("Writing SGs to file:", outfile.Name())
 	if err != nil {
 		return fmt.Errorf("could not create sgs file", err)
 	}
 
-	fmt.Fprintf(outfile, "Account, Region, Security Group Name, Security Group ID\n")
+	writer := csv.NewWriter(outfile)
+	defer writer.Flush()
+	fmt.Println("Writing images to file:", outfile.Name())
+
+	var columnTitles = []string{"Profile",
+		"Account ID",
+		"Region",
+		"Security Group Name",
+		"Security Group ID",
+	}
+
+	tags := options.Tags
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			columnTitles = append(columnTitles, tag)
+		}
+	}
+
+	err = writer.Write(columnTitles)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	for _, accountSGs := range profileSGs {
 		for _, regionSGs := range accountSGs {
 			for _, SG := range regionSGs.SGs {
@@ -171,10 +206,60 @@ func WriteProfilesSGs(profileSGs ProfilesSGs, cidr string) error {
 						}
 					}
 					if x {
-						fmt.Fprintf(outfile, "%s, %s, %s, %s\n", regionSGs.Profile, regionSGs.Region, *SG.GroupName, *SG.GroupId)
+						var data = []string{regionSGs.Profile,
+							regionSGs.AccountID,
+							regionSGs.Region,
+							*SG.GroupName,
+							*SG.GroupId,
+						}
+
+						if len(tags) > 0 {
+							for _, tag := range tags {
+								x := false
+								for _, SGTag := range SG.Tags {
+									if *SGTag.Key == tag {
+										data = append(data, *SGTag.Value)
+										x = true
+									}
+								}
+								if !x {
+									data = append(data, "")
+								}
+							}
+						}
+
+						err = writer.Write(data)
+						if err != nil {
+							fmt.Println(err)
+						}
 					}
 				} else {
-					fmt.Fprintf(outfile, "%s, %s, %s, %s\n", regionSGs.Profile, regionSGs.Region, *SG.GroupName, *SG.GroupId)
+					var data = []string{regionSGs.Profile,
+						regionSGs.AccountID,
+						regionSGs.Region,
+						*SG.GroupName,
+						*SG.GroupId,
+					}
+
+					if len(tags) > 0 {
+						for _, tag := range tags {
+							x := false
+							for _, SGTag := range SG.Tags {
+								if *SGTag.Key == tag {
+									data = append(data, *SGTag.Value)
+									x = true
+								}
+							}
+							if !x {
+								data = append(data, "")
+							}
+						}
+					}
+
+					err = writer.Write(data)
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 			}
 		}

@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"strings"
+	"regexp"
 )
 
 type RegionSnapshots struct {
@@ -142,7 +143,7 @@ func WriteProfilesSnapshots(profileSnapshots ProfilesSnapshots, options utils.Ec
 		"Snapshot Name",
 		"Snapshot ID",
 		"Volume ID",
-		"Volume Attachment Status",
+		"Associated Instance",
 		"Size",
 		"Status",
 		"Start Date",
@@ -189,6 +190,20 @@ func WriteProfilesSnapshots(profileSnapshots ProfilesSnapshots, options utils.Ec
 								}
 							}
 						}
+					}
+				}
+				if volumeAttachment == "N/A" && strings.Contains(*snapshot.Description, "CreateImage") {
+					//regex search to find the instance id, but it does grab more than instance ids, so there is another check later to filter this
+					r, err := regexp.Compile("(?i)\\b[a-z]+-[a-z0-9]+")
+					if err != nil {
+						fmt.Println(err)
+					}
+
+					exp := r.FindString(*snapshot.Description)
+					//if the regex string does not contain "ami" or "snap" or "vol, then it is an instance id
+					//this is to identify instance ids from the "CreateImage" description on ami snapshots
+					if !strings.Contains(exp, "ami") && !strings.Contains(exp, "snap") && !strings.Contains(exp, "vol") {
+						volumeAttachment = exp
 					}
 				}
 

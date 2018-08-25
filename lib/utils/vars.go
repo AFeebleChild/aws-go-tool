@@ -22,7 +22,7 @@ var (
 )
 
 func BuildAccountsSlice(profilesFile string, accessType string) ([]AccountInfo, error) {
-	profiles, err := ReadProfilesFile(profilesFile)
+	profiles, err := ReadFile(profilesFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not open profiles file", err)
 	}
