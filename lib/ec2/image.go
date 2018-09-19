@@ -1,16 +1,16 @@
 package ec2
 
 import (
-	"fmt"
-	"sync"
-	"log"
 	"encoding/csv"
+	"fmt"
+	"log"
+	"strings"
+	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"strings"
 )
 
 type AmiOptions struct {
@@ -20,8 +20,8 @@ type AmiOptions struct {
 type RegionImages struct {
 	Profile   string
 	AccountID string
-	Region string
-	Images      []ec2.Image
+	Region    string
+	Images    []ec2.Image
 }
 
 type AccountImages []RegionImages
