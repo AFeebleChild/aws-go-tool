@@ -14,3 +14,11 @@ output = json
 The `source_profile = saml` is also required, as that profile name is hardcoded into the tool as of now.  This
 is a profile that needs to be configured in your `~/.aws/credentials` file, and have access to assume the list of roles
 passed into the tool.
+
+
+
+
+# TODO
+Add printer function for csv
+
+Create better way to open log file, instead of creating new one each run

@@ -15,8 +15,10 @@
 *.txt
 *.xlsx
 *.log
+*.zip
 
 .idea
+output
 
 aws-go-tool
 .DS_Store

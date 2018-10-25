@@ -131,7 +131,10 @@ func GetProfilesSnapshots(accounts []utils.AccountInfo) (ProfilesSnapshots, erro
 }
 
 func WriteProfilesSnapshots(profileSnapshots ProfilesSnapshots, options utils.Ec2Options) error {
-	outfile, err := utils.CreateFile("snapshots.csv")
+	outputDir := "output/ec2/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "snapshots.csv"
+	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
 		return fmt.Errorf("could not create snapshots file", err)
 	}

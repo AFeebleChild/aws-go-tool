@@ -128,7 +128,10 @@ func GetProfilesVpcs(accounts []utils.AccountInfo) (ProfilesVpcs, error) {
 }
 
 func WriteProfilesVpcs(profileVpcs ProfilesVpcs) error{
-	outfile, err := utils.CreateFile("vpcs.csv")
+	outputDir := "output/vpc/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "vpcs.csv"
+	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
 		return fmt.Errorf("could not create vpcs file", err)
 	}

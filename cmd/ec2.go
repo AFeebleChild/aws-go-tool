@@ -71,6 +71,45 @@ to quickly create a Cobra application.`,
 	},
 }
 
+var volumesListCmd = &cobra.Command{
+	Use:   "volumeslist",
+	Short: "Will generate a report of all volumes for all given accounts",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		profilesVolumes, err := ec2.GetProfilesVolumes(accounts)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		var tags []string
+		if TagFile != "" {
+			tags, err = utils.ReadFile(TagFile)
+			if err != nil {
+				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
+				fmt.Println("could not open tagFile:", err)
+				fmt.Println("continuing without tags in output")
+			}
+		}
+		options := utils.Ec2Options{Tags:tags}
+		err = ec2.WriteProfilesVolumes(profilesVolumes, options)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	},
+}
+
 var imagesListCmd = &cobra.Command{
 	Use:   "imageslist",
 	Short: "Will generate a report of all amis for all given accounts",
@@ -192,6 +231,7 @@ func init() {
 	RootCmd.AddCommand(ec2Cmd)
 
 	ec2Cmd.AddCommand(snapshotsListCmd)
+	ec2Cmd.AddCommand(volumesListCmd)
 	ec2Cmd.AddCommand(imagesListCmd)
 	ec2Cmd.AddCommand(instancesListCmd)
 	ec2Cmd.AddCommand(sgsListCmd)

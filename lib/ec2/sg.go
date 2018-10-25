@@ -163,8 +163,11 @@ func GetProfilesSGs(accounts []utils.AccountInfo) (ProfilesSGs, error) {
 
 //if a cidr is given, search the SGs for that rule and only print those containing the cidr
 func WriteProfilesSGs(profileSGs ProfilesSGs, options SGOptions) error {
+	outputDir := "output/ec2/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "sgs.csv"
 	cidr := options.Cidr
-	outfile, err := utils.CreateFile("sgs.csv")
+	outfile, err := utils.CreateFile(outputFile)
 	fmt.Println("Writing SGs to file:", outfile.Name())
 	if err != nil {
 		return fmt.Errorf("could not create sgs file", err)

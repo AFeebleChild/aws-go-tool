@@ -16,11 +16,13 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"log"
+	//"github.com/afeeblechild/aws-go-tool/lib/utils"
+	"github.com/afeeblechild/aws-go-tool/lib/utils"
 )
 
 var (
@@ -75,17 +77,28 @@ func init() {
 	RootCmd.PersistentFlags().StringVarP(&ProfilesFile, "profilesFile", "p", "", "file with list of account profiles")
 	RootCmd.PersistentFlags().StringVarP(&TagFile, "tagFile", "g", "", "file with list of tags to add to output")
 
+
+	//Create output directory
+	//utils.Dir("output")
+
 	//Setup Log file
 	//Close it in func Execute()
-	if _, err := os.Stat("aws-go-tool.log"); err == nil {
-		LogFile, err = os.Open("aws-go-tool.log")
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		LogFile, err = os.Create("aws-go-tool.log")
+	os.MkdirAll("logs/", 0755)
+	filepath := "logs/aws-go-tool.log"
+	LogFile, err := utils.CreateFile(filepath)
+	if err != nil {
+		panic(err)
 	}
 	log.SetOutput(LogFile)
+	//if _, err := os.Stat("aws-go-tool.log"); err == nil {
+		//TODO need to find a way to open the file for writing
+		//LogFile, err = os.Open("aws-go-tool.log")
+		//if err != nil {
+		//	panic(err)
+		//}
+	//} else {
+	//	LogFile, err = os.Create(filepath)
+	//}
 }
 
 // initConfig reads in config file and ENV variables if set.

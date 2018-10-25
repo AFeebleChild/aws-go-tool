@@ -161,7 +161,10 @@ func CheckPublicSubnet(subnetId string, routeTables []ec2.RouteTable) (bool, err
 }
 
 func WriteProfilesSubnets(profileSubnets ProfilesSubnets) error{
-	outfile, err := utils.CreateFile("subnets.csv")
+	outputDir := "output/vpc/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "subnets.csv"
+	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
 		return fmt.Errorf("could not create subnets file", err)
 	}

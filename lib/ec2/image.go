@@ -131,7 +131,10 @@ func GetProfilesImages(accounts []utils.AccountInfo) (ProfilesImages, error) {
 }
 
 func WriteProfilesImages(profileImages ProfilesImages, options utils.Ec2Options) error {
-	outfile, err := utils.CreateFile("images.csv")
+	outputDir := "output/ec2/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "images.csv"
+	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
 		return fmt.Errorf("could not create images file", err)
 	}

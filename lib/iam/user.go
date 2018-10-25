@@ -166,7 +166,10 @@ func GetProfilesUsers(accounts []utils.AccountInfo) (ProfilesUsers, error) {
 }
 
 func WriteProfilesUsers(profilesUsers ProfilesUsers) error {
-	outfile, err := utils.CreateFile("users.csv")
+	outputDir := "output/iam/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "users.csv"
+	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
 		return fmt.Errorf("could not create users file", err)
 	}

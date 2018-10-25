@@ -17,6 +17,7 @@ type InstanceOptions struct {
 }
 
 type RegionInstances struct {
+	AccountId string
 	Region    string
 	Profile   string
 	Instances []ec2.Instance
@@ -82,13 +83,18 @@ func GetAccountInstances(account utils.AccountInfo) (AccountInstances, error) {
 			account.Region = region
 			sess, err := utils.GetSession(account)
 			if err != nil {
-				log.Println("Could not get session for", account.Profile, ":", err)
+				log.Println("could not get session for", account.Profile, ":", err)
 				return
 			}
 			info.Instances, err = GetRegionInstances(sess)
 			info.Status, err = GetRegionInstancesStatuses(sess)
 			if err != nil {
-				log.Println("Could not get instances for", region, "in", profile, ":", err)
+				log.Println("could not get instances for", region, "in", profile, ":", err)
+				return
+			}
+			info.AccountId, err = utils.GetAccountID(sess)
+			if err != nil {
+				log.Println("could not get account id for profile: ", profile)
 				return
 			}
 			info.Region = region
@@ -142,7 +148,10 @@ func GetProfilesInstances(accounts []utils.AccountInfo) (ProfilesInstances, erro
 }
 
 func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec2Options) error {
-	outfile, err := utils.CreateFile("instances.csv")
+	outputDir := "output/ec2/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "instances.csv"
+	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
 		return fmt.Errorf("could not create instances file", err)
 	}
@@ -151,11 +160,12 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 	defer writer.Flush()
 	fmt.Println("Writing instances to file:", outfile.Name())
 	var columnTitles = []string{"Profile",
-	//TODO add account ID
+		"Account ID",
 		"Region",
 		"Instance Name",
 		"Instance ID",
 		"Private IP",
+		"Public IP",
 		"Pem Key",
 		"Instance Type",
 		"Instance State",
@@ -184,9 +194,9 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 						instanceName = *tag.Value
 					}
 				}
-				privateIP := ""
+				privateIp := ""
 				if instance.PrivateIpAddress != nil {
-					privateIP = *instance.PrivateIpAddress
+					privateIp = *instance.PrivateIpAddress
 				}
 				pemKey := ""
 				if instance.KeyName != nil {
@@ -225,20 +235,27 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 				//	}
 				//}
 
-				var vpcID string
+				var vpcId string
 				if instance.VpcId != nil {
-					vpcID = *instance.VpcId
+					vpcId = *instance.VpcId
+				}
+
+				publicIp := "N/A"
+				if instance.PublicIpAddress != nil {
+					publicIp = *instance.PublicIpAddress
 				}
 
 				var data = []string{regionInstances.Profile,
+					regionInstances.AccountId,
 					regionInstances.Region,
 					instanceName,
 					*instance.InstanceId,
-					privateIP,
+					privateIp,
+					publicIp,
 					pemKey,
 					*instance.InstanceType,
 					*instance.State.Name,
-					vpcID,
+					vpcId,
 				}
 
 				if len(tags) > 0 {

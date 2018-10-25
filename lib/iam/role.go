@@ -211,7 +211,10 @@ func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
 }
 
 func WriteProfilesRoles(profilesRoles ProfilesRoles) error {
-	outfile, err := utils.CreateFile("roles.csv")
+	outputDir := "output/iam/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "roles.csv"
+	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
 		return fmt.Errorf("could not create roles file", err)
 	}

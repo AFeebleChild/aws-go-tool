@@ -7,6 +7,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"log"
 )
 
 type ELBIPInfo struct {
@@ -66,6 +67,17 @@ func CreateFile(name string) (file *os.File, err error) {
 		}
 	}
 	return
+}
+
+//This will create a new directory with the given path relative to where the script was run from
+func MakeDir(path string) {
+	err := os.MkdirAll(path, 0755)
+	if err != nil {
+		if strings.Contains(err.Error(), "file exists") {
+			return
+		}
+		log.Panic("could not create output directory: ", err)
+	}
 }
 
 //ReadFile will open a file, and return a string slice with each line as a string
