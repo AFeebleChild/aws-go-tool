@@ -21,8 +21,6 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	//"github.com/afeeblechild/aws-go-tool/lib/utils"
-	"github.com/afeeblechild/aws-go-tool/lib/utils"
 )
 
 var (
@@ -83,22 +81,12 @@ func init() {
 
 	//Setup Log file
 	//Close it in func Execute()
-	os.MkdirAll("logs/", 0755)
-	filepath := "logs/aws-go-tool.log"
-	LogFile, err := utils.CreateFile(filepath)
+	LogFile, err := os.OpenFile("aws-go-tool.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
-		panic(err)
+		log.Fatalln("Failed to open log file", err)
 	}
 	log.SetOutput(LogFile)
-	//if _, err := os.Stat("aws-go-tool.log"); err == nil {
-		//TODO need to find a way to open the file for writing
-		//LogFile, err = os.Open("aws-go-tool.log")
-		//if err != nil {
-		//	panic(err)
-		//}
-	//} else {
-	//	LogFile, err = os.Create(filepath)
-	//}
+	log.Println("========== STARTING NEW RUN ==========")
 }
 
 // initConfig reads in config file and ENV variables if set.

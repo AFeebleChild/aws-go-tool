@@ -1,7 +1,7 @@
 # aws-go-tool
 
 ### Access Type flag
-The "-a" flag is either "role" or "profile".  If it is role, then the tool assumes that a list of cross account role names
+The "-a" flag needs to be either `role` or `profile`.  If it is `role`, then the tool assumes that a list of cross account role names
 are going to be passed in.  They need to be configured in the shared config file `~/.aws/config` as follows:
 ```
 [profile <profileName>]
@@ -20,5 +20,3 @@ passed into the tool.
 
 # TODO
 Add printer function for csv
-
-Create better way to open log file, instead of creating new one each run
