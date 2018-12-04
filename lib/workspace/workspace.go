@@ -57,12 +57,15 @@ func GetRegionWorkspaces(sess *session.Session) ([]workspaces.Workspace, error) 
 
 func GetRegionWorkspaceTags(instances []workspaces.Workspace, sess *session.Session) ([]workspaces.Tag, error) {
 	var tags []workspaces.Tag
-	for instance := range instances {
+	for _, instance := range instances {
 		params := &workspaces.DescribeTagsInput{
 			ResourceId: aws.String(*instance.WorkspaceId),
+
 		}
 
 		resp, err := workspaces.New(sess).DescribeTags(params)
+
+		tags = append(tags, resp.TagList)
 	}
 
 	return tags, nil

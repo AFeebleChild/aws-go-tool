@@ -11,12 +11,23 @@ region = us-east-1
 output = json
 ```
 
-The `source_profile = saml` is also required, as that profile name is hardcoded into the tool as of now.  This
-is a profile that needs to be configured in your `~/.aws/credentials` file, and have access to assume the list of roles
-passed into the tool.
+The `source_profile = saml` is also required, as that profile name is hardcoded into the tool as of now.  This is a profile that needs to be configured in your `~/.aws/credentials` file, and have access to assume the list of roles passed into the tool.
+
+### Supported Services
+- EC2
+    - Instances
+    - Volumes
+    - Snapshots
+    - AMIs
+    - Security Groups
+- IAM
+    - Roles
+    - Users
+- VPC
+    - VPCs
+    - Subnets
+- Workspaces
 
 
-
-
-# TODO
+### TODO
 Add printer function for csv
