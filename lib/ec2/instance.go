@@ -169,6 +169,7 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 		"Pem Key",
 		"Instance Type",
 		"Instance State",
+		"AMI ID",
 		"VPC",
 	}
 
@@ -245,6 +246,11 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 					publicIp = *instance.PublicIpAddress
 				}
 
+				amiId := "N/A"
+				if instance.ImageId != nil {
+					amiId = *instance.ImageId
+				}
+
 				var data = []string{regionInstances.Profile,
 					regionInstances.AccountId,
 					regionInstances.Region,
@@ -255,6 +261,7 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 					pemKey,
 					*instance.InstanceType,
 					*instance.State.Name,
+					amiId,
 					vpcId,
 				}
 
