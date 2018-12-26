@@ -29,7 +29,7 @@ type ProfilesSnapshots []AccountSnapshots
 //GetRegionSnapshots will take a session and get all snapshots based on the region of the session
 func GetRegionSnapshots(sess *session.Session) ([]ec2.Snapshot, error) {
 	var snapshots []ec2.Snapshot
-	accountID, err := utils.GetAccountID(sess)
+	accountID, err := utils.GetAccountId(sess)
 	if err != nil {
 		return nil, err
 	}

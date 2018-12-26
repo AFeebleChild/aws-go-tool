@@ -78,7 +78,7 @@ func GetAccountSubnets(account utils.AccountInfo) (AccountSubnets, error) {
 				log.Println("Could not get subnet info for", region, "in", profile, ":", err)
 				return
 			}
-			subnets.AccountId, err = utils.GetAccountID(sess)
+			subnets.AccountId, err = utils.GetAccountId(sess)
 			if err != nil {
 				log.Println("Could not get account id for", profile, ":", err)
 				return

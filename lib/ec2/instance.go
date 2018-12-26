@@ -92,7 +92,7 @@ func GetAccountInstances(account utils.AccountInfo) (AccountInstances, error) {
 				log.Println("could not get instances for", region, "in", profile, ":", err)
 				return
 			}
-			info.AccountId, err = utils.GetAccountID(sess)
+			info.AccountId, err = utils.GetAccountId(sess)
 			if err != nil {
 				log.Println("could not get account id for profile: ", profile)
 				return

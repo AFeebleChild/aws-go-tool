@@ -30,7 +30,7 @@ type ProfilesImages []AccountImages
 //GetRegionImages will take a session and pull all amis based on the region of the session
 func GetRegionImages(sess *session.Session) ([]ec2.Image, error) {
 	var amis []ec2.Image
-	AccountID, err := utils.GetAccountID(sess)
+	AccountID, err := utils.GetAccountId(sess)
 	if err != nil {
 		return amis, fmt.Errorf("could not get account id:", err)
 	}
@@ -75,7 +75,7 @@ func GetAccountImages(account utils.AccountInfo) (AccountImages, error) {
 				log.Println("Could not get images for", region, "in", profile, ":", err)
 				return
 			}
-			info.AccountID, err = utils.GetAccountID(sess)
+			info.AccountID, err = utils.GetAccountId(sess)
 			if err != nil {
 				log.Println("Could not get account id for", account.Profile, ":", err)
 				return

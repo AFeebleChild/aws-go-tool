@@ -143,7 +143,7 @@ func GetProfilesUsers(accounts []utils.AccountInfo) (ProfilesUsers, error) {
 			}
 
 			profileUsers.Profile = account.Profile
-			profileUsers.AccountID, err = utils.GetAccountID(sess)
+			profileUsers.AccountID, err = utils.GetAccountId(sess)
 			if err != nil {
 				log.Println("could not get account id for", account.Profile,  ":", err)
 				return

@@ -71,7 +71,7 @@ func GetAccountVpcs(account utils.AccountInfo) (AccountVpcs, error) {
 				log.Println("Could not get vpc info for", region, "in", profile, ":", err)
 				return
 			}
-			vpcs.AccountId, err = utils.GetAccountID(sess)
+			vpcs.AccountId, err = utils.GetAccountId(sess)
 			if err != nil {
 				log.Println("Could not get account id for", profile, ":", err)
 				return

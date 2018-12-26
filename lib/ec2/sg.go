@@ -109,7 +109,7 @@ func GetAccountSGs(account utils.AccountInfo) (AccountSGs, error) {
 			}
 			info.Region = region
 			info.Profile = profile
-			info.AccountID, err = utils.GetAccountID(sess)
+			info.AccountID, err = utils.GetAccountId(sess)
 			if err != nil {
 				log.Println("Could not get account id for", account.Profile, ":", err)
 				return

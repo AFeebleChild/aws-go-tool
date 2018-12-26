@@ -31,8 +31,8 @@ func OpenSession(profile string, region string) *session.Session {
 	return sess
 }
 
-//GetAccountID will get the account ID for the profile currently in use for the session
-func GetAccountID(sess *session.Session) (string, error) {
+//GetAccountId will get the account ID for the profile currently in use for the session
+func GetAccountId(sess *session.Session) (string, error) {
 	params := &sts.GetCallerIdentityInput{}
 
 	resp, err := sts.New(sess).GetCallerIdentity(params)

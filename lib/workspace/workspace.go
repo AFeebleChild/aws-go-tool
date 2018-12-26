@@ -100,7 +100,7 @@ func GetAccountWorkspaces(account utils.AccountInfo) (AccountWorkspaces, error) 
 				log.Println("could not get workspace tags for", region, "in", profile, ":", err)
 				return
 			}
-			info.AccountId, err = utils.GetAccountID(sess)
+			info.AccountId, err = utils.GetAccountId(sess)
 			if err != nil {
 				log.Println("could not get account id for profile: ", profile)
 				return
