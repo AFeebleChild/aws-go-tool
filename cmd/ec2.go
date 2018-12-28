@@ -23,6 +23,10 @@ import (
 	"log"
 )
 
+var (
+	Cidr string
+)
+
 // ec2Cmd represents the ec2 command
 var ec2Cmd = &cobra.Command{
 	Use:   "ec2",
@@ -190,7 +194,7 @@ to quickly create a Cobra application.`,
 
 var sgsListCmd = &cobra.Command{
 	Use:   "sgslist",
-	Short: "Will generate a report of all amis for all given accounts",
+	Short: "Will generate a report of all security groups for all given accounts",
 	Long: `A longer description that spans multiple lines and likely contains examples
 and usage of using your command. For example:
 
@@ -219,7 +223,47 @@ to quickly create a Cobra application.`,
 			}
 		}
 		options := ec2.SGOptions{Tags:tags}
-		err = ec2.WriteProfilesSGs(profilesSGs, options)
+		err = ec2.WriteProfilesSgs(profilesSGs, options)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	},
+}
+
+var sgRulesListCmd = &cobra.Command{
+	Use:   "sgruleslist",
+	Short: "Will generate a report of all security group rules for all given accounts",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		profilesSGs, err := ec2.GetProfilesSGs(accounts)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		var tags []string
+		if TagFile != "" {
+			tags, err = utils.ReadFile(TagFile)
+			if err != nil {
+				log.Println("could not open tagFile:", err, "\ncontinuuing without tags in output")
+				fmt.Println("could not open tagFile:", err)
+				fmt.Println("continuing without tags in output")
+			}
+		}
+		options := ec2.SGOptions{Tags:tags}
+		options.Cidr = Cidr
+		err = ec2.WriteProfilesSgRules(profilesSGs, options)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -235,6 +279,7 @@ func init() {
 	ec2Cmd.AddCommand(imagesListCmd)
 	ec2Cmd.AddCommand(instancesListCmd)
 	ec2Cmd.AddCommand(sgsListCmd)
+	ec2Cmd.AddCommand(sgRulesListCmd)
 
 	// Here you will define your flags and configuration settings.
 
@@ -245,5 +290,5 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// ec2Cmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
+	sgRulesListCmd.PersistentFlags().StringVarP(&Cidr, "cidr", "c", "", "cidr to search for")
 }

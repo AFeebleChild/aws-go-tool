@@ -1,11 +1,11 @@
 package ec2
 
 import (
-	"fmt"
-	"os"
-	"sync"
-	"log"
 	"encoding/csv"
+	"fmt"
+	"log"
+	"sync"
+	"strconv"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -19,42 +19,14 @@ type SGOptions struct {
 }
 
 type RegionSGs struct {
-	Region  string
-	Profile string
+	Region    string
+	Profile   string
 	AccountID string
-	SGs     []ec2.SecurityGroup
+	SGs       []ec2.SecurityGroup
 }
 
 type AccountSGs []RegionSGs
 type ProfilesSGs []AccountSGs
-
-func GetSGGroupRules(SGID string, file *os.File, sess *session.Session) error {
-	params := &ec2.DescribeSecurityGroupsInput{
-		Filters: []*ec2.Filter{
-			{
-				Name: aws.String("group-id"),
-				Values: []*string{
-					aws.String(SGID),
-				},
-			},
-		},
-	}
-
-	resp, err := ec2.New(sess).DescribeSecurityGroups(params)
-	if err != nil {
-		return err
-	}
-
-	SG := resp.SecurityGroups[0]
-
-	for _, rule := range SG.IpPermissions {
-		for _, ip := range rule.IpRanges {
-			fmt.Fprintf(file, "%s, %s, %s, %s, %s, %s, %s\n", SGID, *SG.GroupName, *rule.IpProtocol, *ip.CidrIp, *rule.FromPort, *rule.ToPort, *ip.CidrIp)
-		}
-	}
-
-	return nil
-}
 
 func GetRegionSGs(sess *session.Session) ([]ec2.SecurityGroup, error) {
 	params := &ec2.DescribeSecurityGroupsInput{
@@ -161,12 +133,10 @@ func GetProfilesSGs(accounts []utils.AccountInfo) (ProfilesSGs, error) {
 	return profilesSGs, nil
 }
 
-//if a cidr is given, search the SGs for that rule and only print those containing the cidr
-func WriteProfilesSGs(profileSGs ProfilesSGs, options SGOptions) error {
+func WriteProfilesSgs(profileSGs ProfilesSGs, options SGOptions) error {
 	outputDir := "output/ec2/"
 	utils.MakeDir(outputDir)
 	outputFile := outputDir + "sgs.csv"
-	cidr := options.Cidr
 	outfile, err := utils.CreateFile(outputFile)
 	fmt.Println("Writing SGs to file:", outfile.Name())
 	if err != nil {
@@ -175,7 +145,6 @@ func WriteProfilesSGs(profileSGs ProfilesSGs, options SGOptions) error {
 
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()
-	fmt.Println("Writing images to file:", outfile.Name())
 
 	var columnTitles = []string{"Profile",
 		"Account ID",
@@ -199,69 +168,159 @@ func WriteProfilesSGs(profileSGs ProfilesSGs, options SGOptions) error {
 	for _, accountSGs := range profileSGs {
 		for _, regionSGs := range accountSGs {
 			for _, SG := range regionSGs.SGs {
-				if cidr != "" {
-					x := false
-					for _, rules := range SG.IpPermissions {
-						for _, ip := range rules.IpRanges {
-							if *ip.CidrIp == cidr {
+				var data = []string{regionSGs.Profile,
+					regionSGs.AccountID,
+					regionSGs.Region,
+					*SG.GroupName,
+					*SG.GroupId,
+				}
+
+				if len(tags) > 0 {
+					for _, tag := range tags {
+						x := false
+						for _, SGTag := range SG.Tags {
+							if *SGTag.Key == tag {
+								data = append(data, *SGTag.Value)
 								x = true
 							}
 						}
-					}
-					if x {
-						var data = []string{regionSGs.Profile,
-							regionSGs.AccountID,
-							regionSGs.Region,
-							*SG.GroupName,
-							*SG.GroupId,
+						if !x {
+							data = append(data, "")
 						}
+					}
+				}
 
-						if len(tags) > 0 {
-							for _, tag := range tags {
-								x := false
-								for _, SGTag := range SG.Tags {
-									if *SGTag.Key == tag {
-										data = append(data, *SGTag.Value)
-										x = true
+				err = writer.Write(data)
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+//if a cidr is given, search the SGs for that rule and only print those containing the cidr
+func WriteProfilesSgRules(profileSGs ProfilesSGs, options SGOptions) error {
+	outputDir := "output/ec2/"
+	utils.MakeDir(outputDir)
+	outputFile := outputDir + "sgRules.csv"
+	cidr := options.Cidr
+	outfile, err := utils.CreateFile(outputFile)
+	fmt.Println("Writing SG Rules to file:", outfile.Name())
+	if err != nil {
+		return fmt.Errorf("could not create sgRules file", err)
+	}
+
+	writer := csv.NewWriter(outfile)
+	defer writer.Flush()
+
+	var columnTitles = []string{"Profile",
+		"Account ID",
+		"Region",
+		"Security Group Name",
+		"Security Group ID",
+		"Rule Protocol",
+		"Rule CIDR",
+		"From Port",
+		"To Port",
+	}
+
+	tags := options.Tags
+	if len(tags) > 0 {
+		for _, tag := range tags {
+			columnTitles = append(columnTitles, tag)
+		}
+	}
+
+	err = writer.Write(columnTitles)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for _, accountSGs := range profileSGs {
+		for _, regionSGs := range accountSGs {
+			for _, SG := range regionSGs.SGs {
+				//the cidr option has been passed so need to search for it
+				if cidr != "" {
+					for _, rule := range SG.IpPermissions {
+						for _, ip := range rule.IpRanges {
+							if *ip.CidrIp == cidr {
+								var data = []string{regionSGs.Profile,
+									regionSGs.AccountID,
+									regionSGs.Region,
+									*SG.GroupName,
+									*SG.GroupId,
+									*rule.IpProtocol,
+									*ip.CidrIp,
+									string(*rule.FromPort),
+									string(*rule.ToPort),
+								}
+
+								if len(tags) > 0 {
+									for _, tag := range tags {
+										x := false
+										for _, SGTag := range SG.Tags {
+											if *SGTag.Key == tag {
+												data = append(data, *SGTag.Value)
+												x = true
+											}
+										}
+										if !x {
+											data = append(data, "")
+										}
 									}
 								}
-								if !x {
-									data = append(data, "")
+
+								err = writer.Write(data)
+								if err != nil {
+									fmt.Println(err)
 								}
 							}
 						}
-
-						err = writer.Write(data)
-						if err != nil {
-							fmt.Println(err)
-						}
 					}
+					//no cidr option, just print all the rules
 				} else {
-					var data = []string{regionSGs.Profile,
-						regionSGs.AccountID,
-						regionSGs.Region,
-						*SG.GroupName,
-						*SG.GroupId,
-					}
+					for _, rule := range SG.IpPermissions {
+						var fromPort, toPort string
+						if rule.FromPort != nil {
+							fromPort = strconv.FormatInt(*rule.FromPort, 10)
+						}
+						if rule.ToPort != nil {
+							toPort = strconv.FormatInt(*rule.ToPort, 10)
+						}
+						for _, ip := range rule.IpRanges {
+							var data = []string{regionSGs.Profile,
+								regionSGs.AccountID,
+								regionSGs.Region,
+								*SG.GroupName,
+								*SG.GroupId,
+								*rule.IpProtocol,
+								*ip.CidrIp,
+								fromPort,
+								toPort,
+							}
 
-					if len(tags) > 0 {
-						for _, tag := range tags {
-							x := false
-							for _, SGTag := range SG.Tags {
-								if *SGTag.Key == tag {
-									data = append(data, *SGTag.Value)
-									x = true
+							if len(tags) > 0 {
+								for _, tag := range tags {
+									x := false
+									for _, SGTag := range SG.Tags {
+										if *SGTag.Key == tag {
+											data = append(data, *SGTag.Value)
+											x = true
+										}
+									}
+									if !x {
+										data = append(data, "")
+									}
 								}
 							}
-							if !x {
-								data = append(data, "")
+
+							err = writer.Write(data)
+							if err != nil {
+								fmt.Println(err)
 							}
 						}
-					}
-
-					err = writer.Write(data)
-					if err != nil {
-						fmt.Println(err)
 					}
 				}
 			}
