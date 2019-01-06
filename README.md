@@ -1,6 +1,11 @@
 # aws-go-tool
 
-### Access Type flag
+## Flags
+
+### Access Type Flag
+
+Required
+
 The "-a" flag needs to be either `role` or `profile`.  If it is `role`, then the tool assumes that a list of cross account role names
 are going to be passed in.  They need to be configured in the shared config file `~/.aws/config` as follows:
 ```
@@ -13,21 +18,57 @@ output = json
 
 The `source_profile = saml` is also required, as that profile name is hardcoded into the tool as of now.  This is a profile that needs to be configured in your `~/.aws/credentials` file, and have access to assume the list of roles passed into the tool.
 
-### Supported Services
-- EC2
-    - Instances
-    - Volumes
-    - Snapshots
-    - AMIs
-    - Security Groups
-- IAM
-    - Roles
-    - Users
-- VPC
-    - VPCs
-    - Subnets
-- Workspaces
+### Profiles Flag
 
+Required
+
+The "-p" flag needs to be passed as a text file, with 1 profile per line.
+
+```
+profile1
+profile2
+profile3
+profile4
+```
+
+### Tags Flag
+
+Optional
+
+The "-g" flag can be passed as a text file with one tag name per line, to be added to the csv output.
+
+```
+Name1
+Name2
+Name3
+Name4
+```
+
+### Supported Commands
+- EC2
+    - `instanceslist`
+    - `volumeslist`
+    - `snapshotslist`
+    - `imagelist`
+    - `sgslist`
+    - `sgruleslist`
+- IAM
+    - `roleslist`
+    - `userslist`
+    - `userupdatepw`
+- S3
+    - `bucketslist`
+- VPC
+    - `vpcslist`
+    - `subnetslist`
+- Workspaces (in progress)
 
 ### TODO
 Add printer function for csv
+
+### Download Links
+Linux - https://s3-us-west-2.amazonaws.com/afeeblechild/go-binaries/aws-go-tool-linux.zip
+
+Windows - https://s3-us-west-2.amazonaws.com/afeeblechild/go-binaries/aws-go-tool-windows.zip
+
+Mac - https://s3-us-west-2.amazonaws.com/afeeblechild/go-binaries/aws-go-tool-windows.zip

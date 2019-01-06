@@ -22,6 +22,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	Username string
+)
+
 // iamCmd represents the iam command
 var iamCmd = &cobra.Command{
 	Use:   "iam",
@@ -81,7 +85,7 @@ to quickly create a Cobra application.`,
 
 		for _, account := range accounts {
 			sess := utils.OpenSession(account.Profile, "us-east-1")
-			user := iam.UserUpdate{Username: "atlas@2ndwatch", ResetRequired: false}
+			user := iam.UserUpdate{Username: Username, ResetRequired: false}
 			password, err := iam.UpdateUserPassword(user, sess)
 			if err != nil {
 				//TODO better logging
@@ -124,6 +128,8 @@ func init() {
 	iamCmd.AddCommand(usersListCmd)
 	iamCmd.AddCommand(userUpdatePWCmd)
 	iamCmd.AddCommand(rolesListCmd)
+
+	RootCmd.PersistentFlags().StringVarP(&Username, "username", "u", "", "username to update")
 
 	//usersCmd.AddCommand(listCmd)
 

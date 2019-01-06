@@ -274,12 +274,12 @@ to quickly create a Cobra application.`,
 func init() {
 	RootCmd.AddCommand(ec2Cmd)
 
-	ec2Cmd.AddCommand(snapshotsListCmd)
-	ec2Cmd.AddCommand(volumesListCmd)
 	ec2Cmd.AddCommand(imagesListCmd)
 	ec2Cmd.AddCommand(instancesListCmd)
 	ec2Cmd.AddCommand(sgsListCmd)
 	ec2Cmd.AddCommand(sgRulesListCmd)
+	ec2Cmd.AddCommand(snapshotsListCmd)
+	ec2Cmd.AddCommand(volumesListCmd)
 
 	// Here you will define your flags and configuration settings.
 
