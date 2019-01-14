@@ -28,6 +28,7 @@ type ProfilesSnapshots []AccountSnapshots
 
 //GetRegionSnapshots will take a session and get all snapshots based on the region of the session
 func GetRegionSnapshots(sess *session.Session) ([]ec2.Snapshot, error) {
+	svc := ec2.New(sess)
 	var snapshots []ec2.Snapshot
 	accountID, err := utils.GetAccountId(sess)
 	if err != nil {
@@ -39,14 +40,23 @@ func GetRegionSnapshots(sess *session.Session) ([]ec2.Snapshot, error) {
 		OwnerIds: aws.StringSlice(owners),
 	}
 
-	resp, err := ec2.New(sess).DescribeSnapshots(params)
-	if err != nil {
-		return nil, err
-	}
-
-	//Add the snapshots from the response to a slice to return
-	for _, snapshot := range resp.Snapshots {
-		snapshots = append(snapshots, *snapshot)
+	//x is the check to ensure there is no snapshots in the "NextToken" response parameter
+	x := true
+	for x {
+		resp, err := svc.DescribeSnapshots(params)
+		if err != nil {
+			return nil, fmt.Errorf("could not get snapshots", err)
+		}
+		for _, snapshot := range resp.Snapshots {
+			snapshots = append(snapshots, *snapshot)
+		}
+		//If it is truncated, add the marker to the params for the next loop
+		//If not, set x to false to exit for loop
+		if resp.NextToken != nil {
+			params.NextToken = resp.NextToken
+		} else {
+			x = false
+		}
 	}
 
 	return snapshots, nil
