@@ -237,7 +237,6 @@ func WriteProfilesUsers(profilesUsers ProfilesUsers) error {
 			stringGroups := strings.Join(groups, "|")
 			stringGroupPolicies := strings.Join(groupPolicies, "|")
 			stringGroupInlinePolicies := strings.Join(groupInlinePolicies, "|")
-			//TODO change output to csv package
 
 			var data = []string{profileUsers.Profile,
 				profileUsers.AccountID,

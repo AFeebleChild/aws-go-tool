@@ -16,11 +16,11 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/afeeblechild/aws-go-tool/lib/ec2"
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/spf13/cobra"
-	"log"
 )
 
 var (
@@ -153,6 +153,42 @@ to quickly create a Cobra application.`,
 	},
 }
 
+var imagesCheckCmd = &cobra.Command{
+	Use:   "imagescheck",
+	Short: "Will generate a report of images in use by instances in the account",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		checkedImages, err := ec2.CheckImages(accounts)
+
+		var tags []string
+		if TagFile != "" {
+			tags, err = utils.ReadFile(TagFile)
+			if err != nil {
+				log.Println("could not open tagFile:", err, "\ncontinuuing without tags in output")
+				fmt.Println("could not open tagFile:", err)
+				fmt.Println("continuing without tags in output")
+			}
+		}
+		options := utils.Ec2Options{Tags:tags}
+		err = ec2.WriteCheckedImages(checkedImages, options)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	},
+}
+
 var instancesListCmd = &cobra.Command{
 	Use:   "instanceslist",
 	Short: "Will generate a report of all instances for all given accounts",
@@ -275,6 +311,7 @@ func init() {
 	RootCmd.AddCommand(ec2Cmd)
 
 	ec2Cmd.AddCommand(imagesListCmd)
+	ec2Cmd.AddCommand(imagesCheckCmd)
 	ec2Cmd.AddCommand(instancesListCmd)
 	ec2Cmd.AddCommand(sgsListCmd)
 	ec2Cmd.AddCommand(sgRulesListCmd)

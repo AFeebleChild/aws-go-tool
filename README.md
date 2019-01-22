@@ -6,8 +6,7 @@
 
 Required
 
-The "-a" flag needs to be either `role` or `profile`.  If it is `role`, then the tool assumes that a list of cross account role names
-are going to be passed in.  They need to be configured in the shared config file `~/.aws/config` as follows:
+The "-a" flag needs to be either `role` or `profile`.  If it is `role`, then the tool assumes that a list of cross account role names are going to be passed in.  They need to be configured in the shared config file `~/.aws/config` as follows:
 ```
 [profile <profileName>]
 role_arn = arn:aws:iam::123456789012:role/<roleName>
@@ -50,12 +49,15 @@ Name4
     - `volumeslist`
     - `snapshotslist`
     - `imagelist`
+    - `imagecheck`
+    Checks the images in the account for any the are in use by the instances, and how many use it.  It does not check for the AMI being shared to other accounts.
     - `sgslist`
     - `sgruleslist`
 - IAM
     - `roleslist`
     - `userslist`
     - `userupdatepw`
+    Use the "-u" flag to pass in the username you wish to update the password for.
 - S3
     - `bucketslist`
 - VPC
@@ -65,6 +67,7 @@ Name4
 
 ### TODO
 Add printer function for csv
+Add func for log and console output
 
 ### Download Links
 Linux - https://s3-us-west-2.amazonaws.com/afeeblechild/go-binaries/aws-go-tool-linux.zip

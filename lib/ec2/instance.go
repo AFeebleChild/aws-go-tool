@@ -153,7 +153,7 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 	outputFile := outputDir + "instances.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create instances file", err)
+		return fmt.Errorf("could not create instances file:", err)
 	}
 
 	writer := csv.NewWriter(outfile)

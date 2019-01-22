@@ -5,8 +5,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
-//TODO change to sessioninfo struct
-
 type Sessioninfo struct {
 	Sess    *session.Session
 	Region  string
