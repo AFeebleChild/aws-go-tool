@@ -16,8 +16,9 @@ import (
 )
 
 type RegionSnapshots struct {
-	Region    string
 	Profile   string
+	AccountId string
+	Region    string
 	Snapshots []ec2.Snapshot
 	//The Volumes info here will be used to determine the attachment status of volumes on the snapshots
 	Volumes []ec2.Volume
@@ -28,6 +29,7 @@ type ProfilesSnapshots []AccountSnapshots
 
 //GetRegionSnapshots will take a session and get all snapshots based on the region of the session
 func GetRegionSnapshots(sess *session.Session) ([]ec2.Snapshot, error) {
+	svc := ec2.New(sess)
 	var snapshots []ec2.Snapshot
 	accountID, err := utils.GetAccountId(sess)
 	if err != nil {
@@ -39,14 +41,23 @@ func GetRegionSnapshots(sess *session.Session) ([]ec2.Snapshot, error) {
 		OwnerIds: aws.StringSlice(owners),
 	}
 
-	resp, err := ec2.New(sess).DescribeSnapshots(params)
-	if err != nil {
-		return nil, err
-	}
-
-	//Add the snapshots from the response to a slice to return
-	for _, snapshot := range resp.Snapshots {
-		snapshots = append(snapshots, *snapshot)
+	//x is the check to ensure there is no snapshots in the "NextToken" response parameter
+	x := true
+	for x {
+		resp, err := svc.DescribeSnapshots(params)
+		if err != nil {
+			return nil, fmt.Errorf("could not get snapshots", err)
+		}
+		for _, snapshot := range resp.Snapshots {
+			snapshots = append(snapshots, *snapshot)
+		}
+		//If it is truncated, add the marker to the params for the next loop
+		//If not, set x to false to exit for loop
+		if resp.NextToken != nil {
+			params.NextToken = resp.NextToken
+		} else {
+			x = false
+		}
 	}
 
 	return snapshots, nil
@@ -80,8 +91,13 @@ func GetAccountSnapshots(account utils.AccountInfo) (AccountSnapshots, error) {
 			if err != nil {
 				log.Println("Could not get volumes for", account.Profile, ":", err)
 			}
-			info.Region = region
+			accountId, err := utils.GetAccountId(sess)
+			if err != nil {
+				log.Println("could not get account id for", account.Profile, ":", err)
+			}
 			info.Profile = profile
+			info.AccountId = accountId
+			info.Region = region
 			snapshotsChan <- info
 		}(region)
 	}
@@ -141,7 +157,8 @@ func WriteProfilesSnapshots(profileSnapshots ProfilesSnapshots, options utils.Ec
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()
 	fmt.Println("Writing snapshots to file:", outfile.Name())
-	var columnTitles = []string{"Account",
+	var columnTitles = []string{"Profile",
+		"Account ID",
 		"Region",
 		"Snapshot Name",
 		"Snapshot ID",
@@ -214,6 +231,7 @@ func WriteProfilesSnapshots(profileSnapshots ProfilesSnapshots, options utils.Ec
 				startDate := splitDate[0]
 
 				var data = []string{regionSnapshots.Profile,
+					regionSnapshots.AccountId,
 					regionSnapshots.Region,
 					snapshotName,
 					*snapshot.SnapshotId,

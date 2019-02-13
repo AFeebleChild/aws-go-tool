@@ -51,10 +51,8 @@ func GetSession(account AccountInfo) (*session.Session, error) {
 	}
 	switch account.AccessType {
 	case "role":
-		//fmt.Println("Assuming role for profile:", account.Profile)
 		sess = AssumeClientRole(account)
 	case "profile":
-		//fmt.Println("Opening profile session for profile:", account.Profile)
 		sess = OpenSession(account.Profile, account.Region)
 	default:
 		return nil, fmt.Errorf("no valid options in Access Type specified.  Needs 'role' or 'profile'")
