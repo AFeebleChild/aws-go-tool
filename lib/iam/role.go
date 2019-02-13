@@ -171,6 +171,7 @@ func GetProfilesRoles(accounts []utils.AccountInfo) (ProfilesRoles, error) {
 //UpdateProfilesRoles will take a filename which should be the output of the GetProfilesRoles func
 //The duration parameter is the new MaxSessDuration in seconds
 func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
+	//TODO Update to use csv reader
 	lines, err := utils.ReadFile(filename)
 	if err != nil {
 		return err
@@ -186,7 +187,7 @@ func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
 		if x == 0 {
 			continue
 		}
-
+		//check if the last role is in the same account as the lastest, to reuse the session
 		if profileCompare == "" {
 			profileCompare = profile
 			sess = utils.OpenSession(profile, "us-east-1")
@@ -203,7 +204,7 @@ func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
 		fmt.Printf("In profile %s, updating role %s\n", profile, role)
 		_, err := iam.New(sess).UpdateRole(params)
 		if err != nil {
-			//TODO update logging
+			//TODO update logging to output to log file
 			fmt.Println("Could not update role", role, "in profile", profile, ":", err)
 		}
 	}

@@ -23,7 +23,8 @@ import (
 )
 
 var (
-	Username string
+	Username  string
+	RolesFile string
 )
 
 // iamCmd represents the iam command
@@ -37,8 +38,6 @@ Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// TODO: Work your own magic here
-		fmt.Println("iam called")
 	},
 }
 
@@ -122,14 +121,35 @@ to quickly create a Cobra application.`,
 	},
 }
 
+var rolesUpdateCmd = &cobra.Command{
+	Use:   "rolesupdate",
+	Short: "A brief description of your command",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		//TODO update this wrapper
+		//add cli parameter for duration
+		err := iam.UpdateProfilesRolesSessionDuration(RolesFile, 28800)
+		if err != nil {
+			panic(err)
+		}
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(iamCmd)
 
 	iamCmd.AddCommand(usersListCmd)
 	iamCmd.AddCommand(userUpdatePWCmd)
 	iamCmd.AddCommand(rolesListCmd)
+	iamCmd.AddCommand(rolesUpdateCmd)
 
 	RootCmd.PersistentFlags().StringVarP(&Username, "username", "u", "", "username to update")
+	RootCmd.PersistentFlags().StringVarP(&RolesFile, "rolesfile", "f", "", "list of roles to update")
 
 	//usersCmd.AddCommand(listCmd)
 
