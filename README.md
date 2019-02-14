@@ -54,7 +54,10 @@ Name4
     - `sgslist`
     - `sgruleslist`
 - IAM
+    - `policieslist`
     - `roleslist`
+    - `rolesupdate`
+    Still in progress, but updates the list of roles to an 8 hour assume role duration
     - `userslist`
     - `userupdatepw`
     Use the "-u" flag to pass in the username you wish to update the password for.

@@ -158,14 +158,8 @@ func GetProfilesRoles(accounts []utils.AccountInfo) (ProfilesRoles, error) {
 	return profilesRoles, nil
 }
 
-//func CreateRole() (*iam.Role, error) {
-//	params := &iam.CreateRoleInput{
-//		AssumeRolePolicyDocument: ,
-//		Description: ,
-//		MaxSessionDuration: ,
-//		Path: ,
-//		RoleName: ,
-//	}
+//func GetPolicyDocument(name string, sess *session.Session) {
+//	params := &iam.getpolicy
 //}
 
 //UpdateProfilesRoles will take a filename which should be the output of the GetProfilesRoles func

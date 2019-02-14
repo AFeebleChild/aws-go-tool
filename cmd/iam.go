@@ -114,7 +114,7 @@ to quickly create a Cobra application.`,
 
 		profilesRoles, err := iam.GetProfilesRoles(accounts)
 		if err != nil {
-			fmt.Println("Could not get users from all profiles", err)
+			fmt.Println("Could not get roles from all profiles", err)
 			return
 		}
 		iam.WriteProfilesRoles(profilesRoles)
@@ -140,6 +140,31 @@ to quickly create a Cobra application.`,
 	},
 }
 
+var policiesListCmd = &cobra.Command{
+	Use:   "policieslist",
+	Short: "A brief description of your command",
+	Long: `A longer description that spans multiple lines and likely contains examples
+and usage of using your command. For example:
+
+Cobra is a CLI library for Go that empowers applications.
+This application is a tool to generate the needed files
+to quickly create a Cobra application.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		profilesPolicies, err := iam.GetProfilesPolicies(accounts)
+		if err != nil {
+			fmt.Println("Could not get policies from all profiles", err)
+			return
+		}
+		iam.WriteProfilesPolicies(profilesPolicies)
+	},
+}
+
 func init() {
 	RootCmd.AddCommand(iamCmd)
 
@@ -147,6 +172,7 @@ func init() {
 	iamCmd.AddCommand(userUpdatePWCmd)
 	iamCmd.AddCommand(rolesListCmd)
 	iamCmd.AddCommand(rolesUpdateCmd)
+	iamCmd.AddCommand(policiesListCmd)
 
 	RootCmd.PersistentFlags().StringVarP(&Username, "username", "u", "", "username to update")
 	RootCmd.PersistentFlags().StringVarP(&RolesFile, "rolesfile", "f", "", "list of roles to update")
