@@ -57,7 +57,7 @@ func GetAccountVolumes(account utils.AccountInfo) (AccountVolumes, error) {
 			var err error
 			defer wg.Done()
 			account.Region = region
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("Could not get volumes for", account.Profile, ":", err)
 				return

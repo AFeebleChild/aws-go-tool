@@ -27,22 +27,19 @@ var (
 	cfgFile string
 
 	AccessType   string
+	OutputDir    string
 	ProfilesFile string
 	TagFile      string
 
-	LogFile      *os.File
+	LogFile *os.File
 )
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "aws-go-tool",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Short: "aws-go-tool is an interface to use with aws accounts",
+	Long: `The tool is designed around reporting and interacting with multiple aws accounts.
+There are some parts of the tool that are just for single accounts as well.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
@@ -71,10 +68,10 @@ func init() {
 	RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	//TODO add flag checks to ensure the required flags are set
-	RootCmd.PersistentFlags().StringVarP(&AccessType, "accessType", "a", "", "either role or profile")
+	RootCmd.PersistentFlags().StringVarP(&AccessType, "accessType", "a", "", "either assume, profile, instance, or instanceassume")
 	RootCmd.PersistentFlags().StringVarP(&ProfilesFile, "profilesFile", "p", "", "file with list of account profiles")
 	RootCmd.PersistentFlags().StringVarP(&TagFile, "tagFile", "g", "", "file with list of tags to add to output")
-
+	RootCmd.PersistentFlags().StringVarP(&OutputDir, "outputDir", "o", "", "directory for script output")
 
 	//Create output directory
 	//utils.Dir("output")

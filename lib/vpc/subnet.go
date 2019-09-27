@@ -4,8 +4,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
-	"strings"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
@@ -68,7 +68,7 @@ func GetAccountSubnets(account utils.AccountInfo) (AccountSubnets, error) {
 
 			var err error
 			account.Region = region
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("Could not get session for", account.Profile, ":", err)
 				return
@@ -145,7 +145,7 @@ func CheckPublicSubnet(subnetId string, routeTables []ec2.RouteTable) (bool, err
 			//compare the association subnet id to the provided subnet id
 			if association.SubnetId == nil {
 				continue
-			}else if *association.SubnetId == subnetId {
+			} else if *association.SubnetId == subnetId {
 				//if it matches, start looping through tags to check the name
 				for _, tag := range routeTable.Tags {
 					//set value to lower to have fewer punctuation issues
@@ -160,7 +160,7 @@ func CheckPublicSubnet(subnetId string, routeTables []ec2.RouteTable) (bool, err
 	return false, nil
 }
 
-func WriteProfilesSubnets(profileSubnets ProfilesSubnets) error{
+func WriteProfilesSubnets(profileSubnets ProfilesSubnets) error {
 	outputDir := "output/vpc/"
 	utils.MakeDir(outputDir)
 	outputFile := outputDir + "subnets.csv"

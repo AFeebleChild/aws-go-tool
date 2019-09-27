@@ -81,7 +81,7 @@ func GetAccountInstances(account utils.AccountInfo) (AccountInstances, error) {
 			var err error
 			defer wg.Done()
 			account.Region = region
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("could not get session for", account.Profile, ":", err)
 				return

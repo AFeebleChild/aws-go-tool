@@ -1,16 +1,16 @@
 package s3
 
 import (
-	"strings"
-
 	"encoding/csv"
 	"fmt"
+	"log"
+	"strings"
+	"sync"
+
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"log"
-	"sync"
 )
 
 type BucketInfo struct {
@@ -18,15 +18,35 @@ type BucketInfo struct {
 	Profile   string `yaml:"profile"`
 	AccountId string
 	Region    string `yaml:"region"`
-	//Err is for tracking any errors with getting the bucket Region in the GetAllBucketsInfo function
-	//Or even for use in later functions to track errors with this specific bucket
-	Error error `yaml:"error"`
 }
 
 type AccountBuckets []BucketInfo
 type ProfilesBuckets []AccountBuckets
 
-func GetProfilesBuckets(accounts []utils.AccountInfo) (ProfilesBuckets, error){
+//Will return true if the bucket is public
+func CheckPublicBucket(bucketName string, sess *session.Session) (bool, error) {
+	params := &s3.GetBucketAclInput{
+		Bucket: aws.String(bucketName),
+	}
+
+	resp, err := s3.New(sess).GetBucketAcl(params)
+	if err != nil {
+		return false, err
+	}
+
+	for _, grant := range resp.Grants {
+		//Canonical user type is the root user of the bucket
+		//If any other user has access, it should be a public bucket
+		if *grant.Grantee.Type != "CanonicalUser" && *grant.Grantee.URI != "http://acs.amazonaws.com/groups/s3/LogDelivery"{
+			//fmt.Println("Bucket:", bucketName, ": Grantee -", grant.Grantee, ": Permission -", *grant.Permission)
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func GetProfilesBuckets(accounts []utils.AccountInfo) (ProfilesBuckets, error) {
 	profilesBucketsChan := make(chan AccountBuckets)
 	var wg sync.WaitGroup
 
@@ -35,7 +55,7 @@ func GetProfilesBuckets(accounts []utils.AccountInfo) (ProfilesBuckets, error){
 		go func(account utils.AccountInfo) {
 			var err error
 			defer wg.Done()
-			accountBuckets, err := GetAccountBuckets(account.Profile, "")
+			accountBuckets, err := GetProfileBuckets(account, "")
 			if err != nil {
 				log.Println("Could not get buckets for", account.Profile, ":", err)
 				return
@@ -57,10 +77,14 @@ func GetProfilesBuckets(accounts []utils.AccountInfo) (ProfilesBuckets, error){
 }
 
 //name is an optional parameter for searching the buckets for a name
-func GetAccountBuckets(profile string, name string) ([]BucketInfo, error) {
+func GetProfileBuckets(account utils.AccountInfo, name string) ([]BucketInfo, error) {
+	profile := account.Profile
 	fmt.Println("Getting buckets for profile:", profile)
 	//region is arbitrary for S3 buckets, since the names can be retrieved from any region
-	sess := utils.OpenSession(profile, "us-east-1")
+	sess, err := account.GetSession()
+	if err != nil {
+		return nil, err
+	}
 	bucketNames, err := GetBucketNames(sess, name)
 	if err != nil {
 		return nil, err
@@ -70,17 +94,16 @@ func GetAccountBuckets(profile string, name string) ([]BucketInfo, error) {
 
 	accountId, err := utils.GetAccountId(sess)
 	if err != nil {
-		log.Println("could not get account ID for profile: ", profile)
+		utils.LogAll("could not get account ID for profile: ", profile)
 	}
 	for _, bucketName := range bucketNames {
 		var bucket BucketInfo
 		bucket.Name = bucketName
 		bucket.Profile = profile
 		bucket.AccountId = accountId
-		bucket.Error = nil
 		bucket.Region, err = GetBucketRegion(sess, bucketName)
 		if err != nil {
-			bucket.Error = fmt.Errorf("could not get the bucket region :", err)
+			utils.LogAll("could not get region for", profile, ":", err)
 		}
 		buckets = append(buckets, bucket)
 	}

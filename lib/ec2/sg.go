@@ -4,8 +4,8 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
-	"sync"
 	"strconv"
+	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
@@ -69,7 +69,7 @@ func GetAccountSGs(account utils.AccountInfo) (AccountSGs, error) {
 			var err error
 			defer wg.Done()
 			account.Region = region
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("Could not get security groups for", account.Profile, ":", err)
 				return
@@ -253,8 +253,8 @@ func WriteProfilesSgRules(profileSGs ProfilesSGs, options SGOptions) error {
 									*SG.GroupId,
 									*rule.IpProtocol,
 									*ip.CidrIp,
-									string(*rule.FromPort),
-									string(*rule.ToPort),
+									strconv.FormatInt(*rule.FromPort, 10),
+									strconv.FormatInt(*rule.ToPort, 10),
 								}
 
 								if len(tags) > 0 {

@@ -1,11 +1,11 @@
 package vpc
 
 import (
+	"encoding/csv"
 	"fmt"
 	"log"
-	"sync"
 	"strconv"
-	"encoding/csv"
+	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -14,10 +14,10 @@ import (
 
 type RegionVpcs struct {
 	AccountId string
-	Region  string
-	Profile string
-	Vpcs    []ec2.Vpc
-	Subnets []ec2.Subnet
+	Region    string
+	Profile   string
+	Vpcs      []ec2.Vpc
+	Subnets   []ec2.Subnet
 }
 
 type AccountVpcs []RegionVpcs
@@ -61,7 +61,7 @@ func GetAccountVpcs(account utils.AccountInfo) (AccountVpcs, error) {
 
 			var err error
 			account.Region = region
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("Could not get session for", account.Profile, ":", err)
 				return
@@ -127,7 +127,7 @@ func GetProfilesVpcs(accounts []utils.AccountInfo) (ProfilesVpcs, error) {
 	return profilesVpcs, nil
 }
 
-func WriteProfilesVpcs(profileVpcs ProfilesVpcs) error{
+func WriteProfilesVpcs(profileVpcs ProfilesVpcs) error {
 	outputDir := "output/vpc/"
 	utils.MakeDir(outputDir)
 	outputFile := outputDir + "vpcs.csv"

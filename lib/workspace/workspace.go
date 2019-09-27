@@ -4,13 +4,13 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/workspaces"
-	"strconv"
 )
 
 type WorkspaceOptions struct {
@@ -60,7 +60,6 @@ func GetRegionWorkspaceTags(instances []workspaces.Workspace, sess *session.Sess
 	for _, instance := range instances {
 		params := &workspaces.DescribeTagsInput{
 			ResourceId: aws.String(*instance.WorkspaceId),
-
 		}
 
 		resp, err := workspaces.New(sess).DescribeTags(params)
@@ -85,7 +84,7 @@ func GetAccountWorkspaces(account utils.AccountInfo) (AccountWorkspaces, error) 
 			var err error
 			defer wg.Done()
 			account.Region = region
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("could not get session for", account.Profile, ":", err)
 				return

@@ -20,7 +20,7 @@ type UserUpdate struct {
 
 type ProfileUsers struct {
 	Profile    string
-	AccountID    string
+	AccountID  string
 	Users      []iam.User
 	UsersInfo  []iam.UserDetail
 	GroupsInfo []iam.GroupDetail
@@ -119,7 +119,7 @@ func GetProfilesUsers(accounts []utils.AccountInfo) (ProfilesUsers, error) {
 			fmt.Println("Getting users for profile:", account.Profile)
 			defer wg.Done()
 			var profileUsers ProfileUsers
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("Could not get users for", account.Profile, ":", err)
 				return
@@ -145,7 +145,7 @@ func GetProfilesUsers(accounts []utils.AccountInfo) (ProfilesUsers, error) {
 			profileUsers.Profile = account.Profile
 			profileUsers.AccountID, err = utils.GetAccountId(sess)
 			if err != nil {
-				log.Println("could not get account id for", account.Profile,  ":", err)
+				log.Println("could not get account id for", account.Profile, ":", err)
 				return
 			}
 			profilesUsersChan <- profileUsers

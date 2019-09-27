@@ -3,6 +3,7 @@ package iam
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
@@ -11,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
-	"log"
 )
 
 type RoleInfo struct {
@@ -125,7 +125,7 @@ func GetProfilesRoles(accounts []utils.AccountInfo) (ProfilesRoles, error) {
 			fmt.Println("Getting roles for profile:", account.Profile)
 			var profileRoles ProfileRoles
 			profileRoles.Profile = account.Profile
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("could not open session for ", account.Profile, " : ", err)
 				return

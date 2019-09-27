@@ -14,28 +14,30 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
-type ImageInfo struct {
-	Image     ec2.Image
-	InUse     bool //if the AMI is in use by any current instance
-	Count     int  //how many instances use the AMI
-	AccountId string
-	Profile   string
-	Region    string
-}
+type (
+	ImageInfo struct {
+		Image     ec2.Image
+		InUse     bool //if the AMI is in use by any current instance
+		Count     int  //how many instances use the AMI
+		AccountId string
+		Profile   string
+		Region    string
+	}
 
-type AmiOptions struct {
-	Tags []string
-}
+	AmiOptions struct {
+		Tags []string
+	}
 
-type RegionImages struct {
-	Profile   string
-	AccountId string
-	Region    string
-	Images    []ec2.Image
-}
+	RegionImages struct {
+		Profile   string
+		AccountId string
+		Region    string
+		Images    []ec2.Image
+	}
 
-type AccountImages []RegionImages
-type ProfilesImages []AccountImages
+	AccountImages  []RegionImages
+	ProfilesImages []AccountImages
+)
 
 //GetRegionImages will take a session and pull all amis based on the region of the session
 func GetRegionImages(sess *session.Session) ([]ec2.Image, error) {
@@ -75,7 +77,7 @@ func GetAccountImages(account utils.AccountInfo) (AccountImages, error) {
 			var err error
 			defer wg.Done()
 			account.Region = region
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("Could not get users for", account.Profile, ":", err)
 				return
@@ -268,7 +270,7 @@ func CheckImages(accounts []utils.AccountInfo) ([]ImageInfo, error) {
 				if found {
 					checkedImage := ImageInfo{Image: image, InUse: true, Count: count, Profile: profile, AccountId: account, Region: region}
 					checkedImages = append(checkedImages, checkedImage)
-				}else if !found {
+				} else if !found {
 					checkedImage := ImageInfo{Image: image, InUse: false, Count: 0, Profile: profile, AccountId: account, Region: region}
 					checkedImages = append(checkedImages, checkedImage)
 				}

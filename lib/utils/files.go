@@ -2,12 +2,11 @@ package utils
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 	"strings"
-	"log"
 )
 
 type ELBIPInfo struct {
@@ -20,22 +19,20 @@ type ELBIPInfo struct {
 type ELBLogInfo []ELBIPInfo
 
 //CreateFile will create a file with a given name
-//It will do checking to ensure that it does not overwrite a file with the same name
+//It will check to ensure that it does not overwrite a file with the same name
 func CreateFile(name string) (file *os.File, err error) {
-	x := true
 	splitName := strings.Split(name, ".")
-	var prefix, suffix string
 	lenSplit := len(splitName)
-	//TODO need to add logic if there is more than 1 period in the file name
+	//prefix is everything leading up to the last period in the name
+	//suffix is everything after the last period in the name
+	var prefix, suffix string
 	if lenSplit == 1 {
 		prefix = splitName[0]
-	} else if lenSplit == 2 {
-		prefix, suffix = splitName[0], splitName[1]
-	} else {
-		err := errors.New("ERROR: unable to handle more than 1 period in file name")
-		return nil, err
+	} else if lenSplit >= 2 {
+		prefix, suffix = splitName[lenSplit-2], splitName[lenSplit-1]
 	}
 
+	x := true
 	//Will loop through name appending to ensure that existing files with the same name are not overwritten
 	for i := 0; x; i++ {
 		if i == 0 {
@@ -60,9 +57,9 @@ func CreateFile(name string) (file *os.File, err error) {
 				x = false
 			}
 		}
-		//Catch to break loop all in case file reading goes wrong
+		//Catch to break loop in case file reading goes wrong
 		if i >= 1000 {
-			fmt.Println("i >= 1000, breaking loop")
+			fmt.Println("i >= 1000 in file name creation, breaking loop")
 			x = false
 		}
 	}
@@ -76,7 +73,8 @@ func MakeDir(path string) {
 		if strings.Contains(err.Error(), "file exists") {
 			return
 		}
-		log.Panic("could not create output directory: ", err)
+		//TODO add a return error
+		log.Panic("could not create directory:", path, ":", err)
 	}
 }
 
@@ -131,6 +129,7 @@ func ParseELBLog(path string, geo bool) (ELBLogInfo, error) {
 			var temp ELBIPInfo
 			temp.SourceIP = newIP
 			temp.SourceIPCount = 1
+			//TODO get top 5 IP locations in list, instead of all
 			if geo {
 				fmt.Println("Checking Geo Location for IP:", newIP)
 				temp.SourceIPGeoInfo, _ = GetIPGeoLocation(newIP)

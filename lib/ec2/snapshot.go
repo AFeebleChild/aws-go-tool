@@ -4,15 +4,15 @@ import (
 	"encoding/csv"
 	"fmt"
 	"log"
+	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"strings"
-	"regexp"
 )
 
 type RegionSnapshots struct {
@@ -77,7 +77,7 @@ func GetAccountSnapshots(account utils.AccountInfo) (AccountSnapshots, error) {
 			var err error
 			defer wg.Done()
 			account.Region = region
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("Could not get snapshots for", account.Profile, ":", err)
 				return
@@ -202,10 +202,10 @@ func WriteProfilesSnapshots(profileSnapshots ProfilesSnapshots, options utils.Ec
 				if *snapshot.VolumeId != "vol-ffffffff" {
 					for _, volume := range regionSnapshots.Volumes {
 						if *volume.VolumeId == *snapshot.VolumeId {
-							for _, attachment := range volume.Attachments{
+							for _, attachment := range volume.Attachments {
 								if *attachment.State == "attached" {
 									volumeAttachment = *attachment.InstanceId
-								}else {
+								} else {
 									volumeAttachment = "unattached"
 								}
 							}

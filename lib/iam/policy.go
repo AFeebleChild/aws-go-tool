@@ -89,7 +89,7 @@ func GetProfilesPolicies(accounts []utils.AccountInfo) (ProfilesPolicies, error)
 		go func(account utils.AccountInfo) {
 			defer wg.Done()
 			fmt.Println("Getting policies for profile:", account.Profile)
-			sess, err := utils.GetSession(account)
+			sess, err := account.GetSession()
 			if err != nil {
 				log.Println("could not open session for ", account.Profile, " : ", err)
 				return
