@@ -86,8 +86,8 @@ Name4
 - Add utils file in cmd to have an easier wrapper func to build account list, get tags, logging, etc.
 
 ### Download Links
-Linux - https://s3-us-west-2.amazonaws.com/2w-thitchens/go-binaries/aws-go-tool-linux.zip
+Linux - https://s3-us-west-2.amazonaws.com/afeeblehchild/go-binaries/aws-go-tool-linux.zip
 
-Windows - https://s3-us-west-2.amazonaws.com/2w-thitchens/go-binaries/aws-go-tool-windows.zip
+Windows - https://s3-us-west-2.amazonaws.com/afeeblechild/go-binaries/aws-go-tool-windows.zip
 
-Mac - https://s3-us-west-2.amazonaws.com/2w-thitchens/go-binaries/aws-go-tool-windows.zip
+Mac - https://s3-us-west-2.amazonaws.com/afeeblechild/go-binaries/aws-go-tool-windows.zip
