@@ -77,8 +77,8 @@ func GetProfileUsers(sess *session.Session) ([]iam.User, error) {
 
 func GetProfileAccountAuthInfo(sess *session.Session) ([]iam.GroupDetail, []iam.UserDetail, error) {
 	svc := iam.New(sess)
-	var groupinfo []iam.GroupDetail
-	var userinfo []iam.UserDetail
+	var groupInfo []iam.GroupDetail
+	var userInfo []iam.UserDetail
 	params := &iam.GetAccountAuthorizationDetailsInput{
 		MaxItems: aws.Int64(100),
 	}
@@ -91,10 +91,10 @@ func GetProfileAccountAuthInfo(sess *session.Session) ([]iam.GroupDetail, []iam.
 			return nil, nil, err
 		}
 		for _, group := range resp.GroupDetailList {
-			groupinfo = append(groupinfo, *group)
+			groupInfo = append(groupInfo, *group)
 		}
 		for _, user := range resp.UserDetailList {
-			userinfo = append(userinfo, *user)
+			userInfo = append(userInfo, *user)
 		}
 		//If it is truncated, add the marker to the params for the next loop
 		//If not, set x to false to exit for loop
@@ -105,7 +105,7 @@ func GetProfileAccountAuthInfo(sess *session.Session) ([]iam.GroupDetail, []iam.
 		}
 	}
 
-	return groupinfo, userinfo, nil
+	return groupInfo, userInfo, nil
 }
 
 //GetProfilesUsers will get all of the users in all given accounts
@@ -134,11 +134,11 @@ func GetProfilesUsers(accounts []utils.AccountInfo) (ProfilesUsers, error) {
 			}
 
 			//Getting account auth info from iam to get policy info
-			groupsinfo, usersinfo, err := GetProfileAccountAuthInfo(sess)
-			for _, group := range groupsinfo {
+			groupsInfo, usersInfo, err := GetProfileAccountAuthInfo(sess)
+			for _, group := range groupsInfo {
 				profileUsers.GroupsInfo = append(profileUsers.GroupsInfo, group)
 			}
-			for _, user := range usersinfo {
+			for _, user := range usersInfo {
 				profileUsers.UsersInfo = append(profileUsers.UsersInfo, user)
 			}
 
@@ -171,7 +171,7 @@ func WriteProfilesUsers(profilesUsers ProfilesUsers) error {
 	outputFile := outputDir + "users.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create users file", err)
+		return fmt.Errorf("could not create users file: %v", err)
 	}
 
 	writer := csv.NewWriter(outfile)

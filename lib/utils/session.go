@@ -52,11 +52,11 @@ func (account AccountInfo) GetSession() (*session.Session, error) {
 		sess = OpenSession(account.Profile, account.Region)
 	case "instance":
 		sess = session.Must(session.NewSession())
-	//TODO implement instance assume
+	//TODO implement instanceassume
 	//case "instanceassume":
 	//	sess = AssumeRoleWithInstance(account)
 	default:
-		return nil, fmt.Errorf("no valid options in Access Type specified.  Needs 'assume', 'profile', or 'instance'")
+		return nil, fmt.Errorf("no valid options in Access Type specified.  Needs 'assume', 'profile', 'instance', or 'instanceassume'")
 	}
 	return sess, nil
 }

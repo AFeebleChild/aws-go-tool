@@ -19,6 +19,7 @@
 
 .idea
 output
+profiles
 
 aws-go-tool
 .DS_Store

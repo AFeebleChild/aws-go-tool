@@ -3,8 +3,8 @@ package s3
 import (
 	"encoding/csv"
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
@@ -191,7 +191,7 @@ func GetProfilesPublicBucketsFileSize(accounts []utils.AccountInfo, bucketOption
 				for _, bucketSizeInfo := range bucketsSizeInfo {
 					getBucketsChan <- bucketSizeInfo
 				}
-			}else {
+			} else {
 				bucketsSizeInfo, err := GetProfileBucketsFileSize(buckets, account)
 				if err != nil {
 					utils.LogAll("could not get bucket info for profile", account.Profile, ":", err)
@@ -263,50 +263,50 @@ func WriteProfilesBucketsFileSize(profilesBuckets []*BucketSizeInfo) error {
 		fmt.Println(err)
 	}
 	for _, bucket := range profilesBuckets {
-			var data = []string{bucket.BucketInfo.Profile,
-				bucket.BucketInfo.AccountId,
-				bucket.BucketInfo.Region,
-				bucket.BucketInfo.Name,
-				strconv.Itoa(bucket.ObjectCount),
-			}
+		var data = []string{bucket.BucketInfo.Profile,
+			bucket.BucketInfo.AccountId,
+			bucket.BucketInfo.Region,
+			bucket.BucketInfo.Name,
+			strconv.Itoa(bucket.ObjectCount),
+		}
 
-			for i, column := range columnTitles {
-				//skip the profile, account id, region, name, and object count columns
-				if i <= 4 || column == "Total Size"{
-					continue
-				}
-				x := false
-				for _, fileType := range bucket.FileTypes {
-					if column == fileType.Type {
-						x = true
-						data = append(data, strconv.FormatInt(fileType.Size, 10))
-					}
-				}
-				if !x {
-					data = append(data, "N/A")
+		for i, column := range columnTitles {
+			//skip the profile, account id, region, name, and object count columns
+			if i <= 4 || column == "Total Size" {
+				continue
+			}
+			x := false
+			for _, fileType := range bucket.FileTypes {
+				if column == fileType.Type {
+					x = true
+					data = append(data, strconv.FormatInt(fileType.Size, 10))
 				}
 			}
-			data = append(data, strconv.FormatInt(bucket.TotalSize, 10))
-
-			//if len(tags) > 0 {
-			//	for _, tag := range tags {
-			//		x := false
-			//		for _, bucketTag := range bucket.Tags {
-			//			if *bucketTag.Key == tag {
-			//				data = append(data, *bucketTag.Value)
-			//				x = true
-			//			}
-			//		}
-			//		if !x {
-			//			data = append(data, "")
-			//		}
-			//	}
-			//}
-
-			err = writer.Write(data)
-			if err != nil {
-				fmt.Println(err)
+			if !x {
+				data = append(data, "N/A")
 			}
+		}
+		data = append(data, strconv.FormatInt(bucket.TotalSize, 10))
+
+		//if len(tags) > 0 {
+		//	for _, tag := range tags {
+		//		x := false
+		//		for _, bucketTag := range bucket.Tags {
+		//			if *bucketTag.Key == tag {
+		//				data = append(data, *bucketTag.Value)
+		//				x = true
+		//			}
+		//		}
+		//		if !x {
+		//			data = append(data, "")
+		//		}
+		//	}
+		//}
+
+		err = writer.Write(data)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 	return nil
 }

@@ -1,22 +1,22 @@
 package ec2
 
 import (
-	"fmt"
 	"encoding/csv"
-	"strings"
-	"sync"
+	"fmt"
 	"log"
 	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
 type RegionVolumes struct {
-	Region    string
-	Profile   string
+	Region  string
+	Profile string
 	Volumes []ec2.Volume
 }
 
@@ -27,7 +27,7 @@ type ProfilesVolumes []AccountVolumes
 func GetRegionVolumes(sess *session.Session) ([]ec2.Volume, error) {
 	var volumes []ec2.Volume
 	params := &ec2.DescribeVolumesInput{
-		DryRun:   aws.Bool(false),
+		DryRun: aws.Bool(false),
 	}
 
 	resp, err := ec2.New(sess).DescribeVolumes(params)

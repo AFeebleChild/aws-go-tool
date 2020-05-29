@@ -14,10 +14,11 @@ import (
 )
 
 type BucketInfo struct {
-	Name      string `yaml:"name"`
-	Profile   string `yaml:"profile"`
-	AccountId string
-	Region    string `yaml:"region"`
+	Name       string `yaml:"name"`
+	Profile    string `yaml:"profile"`
+	AccountId  string
+	Encryption string `yaml:"encrypted"`
+	Region     string `yaml:"region"`
 }
 
 type AccountBuckets []BucketInfo
@@ -37,7 +38,7 @@ func CheckPublicBucket(bucketName string, sess *session.Session) (bool, error) {
 	for _, grant := range resp.Grants {
 		//Canonical user type is the root user of the bucket
 		//If any other user has access, it should be a public bucket
-		if *grant.Grantee.Type != "CanonicalUser" && *grant.Grantee.URI != "http://acs.amazonaws.com/groups/s3/LogDelivery"{
+		if *grant.Grantee.Type != "CanonicalUser" && *grant.Grantee.URI != "http://acs.amazonaws.com/groups/s3/LogDelivery" {
 			//fmt.Println("Bucket:", bucketName, ": Grantee -", grant.Grantee, ": Permission -", *grant.Permission)
 			return true, nil
 		}
@@ -80,7 +81,6 @@ func GetProfilesBuckets(accounts []utils.AccountInfo) (ProfilesBuckets, error) {
 func GetProfileBuckets(account utils.AccountInfo, name string) ([]BucketInfo, error) {
 	profile := account.Profile
 	fmt.Println("Getting buckets for profile:", profile)
-	//region is arbitrary for S3 buckets, since the names can be retrieved from any region
 	sess, err := account.GetSession()
 	if err != nil {
 		return nil, err
@@ -103,8 +103,24 @@ func GetProfileBuckets(account utils.AccountInfo, name string) ([]BucketInfo, er
 		bucket.AccountId = accountId
 		bucket.Region, err = GetBucketRegion(sess, bucketName)
 		if err != nil {
-			utils.LogAll("could not get region for", profile, ":", err)
+			utils.LogAll("could not get region for", bucketName, "in", profile, ":", err)
 		}
+		encryptionSess := sess
+		//Region matters for getting the encryption information, so just create a temp account in order to set the proper region and get a new session
+		if bucket.Region != "us-east-1" {
+			tempAccount := account
+			tempAccount.Region = bucket.Region
+			encryptionSess, err = tempAccount.GetSession()
+			//TODO determine a good fail condition here
+			if err != nil {
+
+			}
+		}
+		bucket.Encryption, err = GetBucketEncryption(encryptionSess, bucketName)
+		if err != nil {
+			utils.LogAll("could not get encryption for", bucketName, "in", profile, ":", err)
+		}
+
 		buckets = append(buckets, bucket)
 	}
 	return buckets, nil
@@ -134,6 +150,25 @@ func GetBucketNames(sess *session.Session, name string) ([]string, error) {
 	}
 
 	return names, nil
+}
+
+//GetBucketEncryption will return the encryption type, if enabled, for the specified bucket
+//There should only ever be one encrypt type applied, even though the rules is a slice
+func GetBucketEncryption(sess *session.Session, name string) (string, error) {
+	params := &s3.GetBucketEncryptionInput{
+		Bucket: aws.String(name),
+	}
+
+	resp, err := s3.New(sess).GetBucketEncryption(params)
+	if err != nil {
+		if strings.Contains(err.Error(), "The server side encryption configuration was not found") {
+			return "no encryption", nil
+		}
+		return "", err
+	}
+
+	//Just getting down to the encryption type to return, and nothing else
+	return *resp.ServerSideEncryptionConfiguration.Rules[0].ApplyServerSideEncryptionByDefault.SSEAlgorithm, nil
 }
 
 func GetBucketRegion(sess *session.Session, bucketName string) (string, error) {
@@ -169,6 +204,7 @@ func WriteProfilesBuckets(profileBuckets ProfilesBuckets) error {
 		"Account ID",
 		"Region",
 		"Bucket Name",
+		"Encryption",
 	}
 
 	//tags := options.Tags
@@ -190,6 +226,7 @@ func WriteProfilesBuckets(profileBuckets ProfilesBuckets) error {
 				bucket.AccountId,
 				bucket.Region,
 				bucket.Name,
+				bucket.Encryption,
 			}
 
 			//if len(tags) > 0 {

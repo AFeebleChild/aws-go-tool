@@ -2,9 +2,16 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
-	"github.com/afeeblechild/aws-go-tool/lib/utils"
+	"os"
+
 	"github.com/afeeblechild/aws-go-tool/lib/ssm"
+	"github.com/afeeblechild/aws-go-tool/lib/utils"
+	"github.com/spf13/cobra"
+)
+
+var (
+	AccountIdsFile string
+	DocumentName   string
 )
 
 var ssmCmd = &cobra.Command{
@@ -15,9 +22,9 @@ var ssmCmd = &cobra.Command{
 	},
 }
 
-var patchCmd = &cobra.Command{
-	Use:   "patch",
-	Short: "A brief description of your command",
+var removeDocumentPermissionsCmd = &cobra.Command{
+	Use:   "removedocumentpermissions",
+	Short: "remove permissions from private ssm document",
 	Run: func(cmd *cobra.Command, args []string) {
 		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
 		if err != nil {
@@ -25,30 +32,10 @@ var patchCmd = &cobra.Command{
 			return
 		}
 
-		OSList := []string{"WINDOWS", "SUSE", "CENTOS", "UBUNTU", "AMAZON_LINUX", "AMAZON_LINUX_2", "REDHAT_ENTERPRISE_LINUX"}
-		ssm.AddRegionBaselines(OSList, accounts[0])
+		err = ssm.RemoveDocumentPermissionsFromAccounts(accounts, AccountIdsFile, DocumentName)
 		if err != nil {
-			fmt.Println(err)
-			return
-		}
-	},
-}
-
-var statusCmd = &cobra.Command{
-	Use:   "status",
-	Short: "A brief description of your command",
-	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		OSList := []string{"WINDOWS", "SUSE", "CENTOS", "UBUNTU", "AMAZON_LINUX", "AMAZON_LINUX_2", "REDHAT_ENTERPRISE_LINUX"}
-		ssm.AddRegionBaselines(OSList, accounts[0])
-		if err != nil {
-			fmt.Println(err)
-			return
+			utils.LogAll("could not remove permissions:", err)
+			os.Exit(1)
 		}
 	},
 }
@@ -56,6 +43,8 @@ var statusCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(ssmCmd)
 
-	ssmCmd.AddCommand(patchCmd)
-	ssmCmd.AddCommand(statusCmd)
+	ssmCmd.AddCommand(removeDocumentPermissionsCmd)
+
+	ssmCmd.PersistentFlags().StringVarP(&AccountIdsFile, "accountidsfile", "f", "", "list of account ids to remove")
+	ssmCmd.PersistentFlags().StringVarP(&DocumentName, "documentname", "d", "", "name of document to update")
 }

@@ -102,7 +102,7 @@ var instancesListCmd = &cobra.Command{
 			tags, err = utils.ReadFile(TagFile)
 			if err != nil {
 				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-				fmt.Println("could not open tagFile:", err,"\ncontinuing without tags in output")
+				fmt.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
 			}
 		}
 		options := utils.Ec2Options{Tags: tags}

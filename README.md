@@ -74,6 +74,8 @@ Name4
     - `bucketslist`
     - `filesize`
         - This is used to gather the size of all file types in the specified buckets. Either a file with a list of buckets can be entered with the `-b` flag, or "public-only" can be passed to the same flag. If a file with a list of buckets is passed, it will only search the first account in the profiles file passed. If the public-only parameter is passed, it will search through all the accounts in the profiles file.
+- SSM
+    - `removedocumentpermissions`
 - VPC
     - `vpcslist`
     - `subnetslist`
@@ -82,8 +84,12 @@ Name4
 ### TODO
 - Rework utils.BuildAccountsSlice to be a global variable, and not needed to be called on every cli command.
 - Add printer function for csv
-- Add global option for json or csv output
+- Add global option for yaml, json, or csv output
+    - Update print functions to have yaml/yaml config to determine what to output in the report
 - Add utils file in cmd to have an easier wrapper func to build account list, get tags, logging, etc.
+- Add logging for functions as they are called
+- Update the userslist function to include access key information per user
+- Update SSM documentation
 
 ### Download Links
 Linux - https://afeeblechild.s3-us-west-2.amazonaws.com/go-binaries/aws-go-tool-linux.zip

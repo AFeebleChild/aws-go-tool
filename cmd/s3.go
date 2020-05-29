@@ -69,7 +69,7 @@ var fileSizeCmd = &cobra.Command{
 			}
 			s3.WriteProfilesBucketsFileSize(bucketsInfo)
 			//utils.PrettyPrintJson(bucketsInfo)
-		}else if BucketFile == "all"{
+		} else if BucketFile == "all" {
 			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(accounts, "public-only")
 			//_, err := s3.GetProfilesPublicBucketsFileSize(accounts)
 
@@ -79,7 +79,7 @@ var fileSizeCmd = &cobra.Command{
 			}
 			s3.WriteProfilesBucketsFileSize(bucketsInfo)
 			//utils.PrettyPrintJson(bucketsInfo)
-		}else {
+		} else {
 			buckets, err := utils.ReadFile(BucketFile)
 			if err != nil {
 				utils.LogAll("could not read buckets file:", err)
