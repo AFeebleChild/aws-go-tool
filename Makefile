@@ -15,9 +15,9 @@ build:
 	
 upload:
 	@echo "Uploading zip files"
-	aws s3 cp ./aws-go-tool-linux.zip s3://afeeblechild/go-binaries/aws-go-tool-linux.zip --profile personal
-	aws s3 cp ./aws-go-tool-windows.zip s3://afeeblechild/go-binaries/aws-go-tool-windows.zip --profile personal
-	aws s3 cp ./aws-go-tool-mac.zip s3://afeeblechild/go-binaries/aws-go-tool-mac.zip --profile personal
+	aws s3 cp ./aws-go-tool-linux.zip s3://afeeblechild/go-binaries/aws-go-tool-linux.zip --profile personal-upload
+	aws s3 cp ./aws-go-tool-windows.zip s3://afeeblechild/go-binaries/aws-go-tool-windows.zip --profile personal-upload
+	aws s3 cp ./aws-go-tool-mac.zip s3://afeeblechild/go-binaries/aws-go-tool-mac.zip --profile personal-upload
 
 clean:
 	@echo "Removing zip files"

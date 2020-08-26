@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -21,7 +23,8 @@ output = json
 //If AccessType is profile, then it will just use the profile in your shared credential file ~/.aws/credentials
 type AccountInfo struct {
 	AccountID  string
-	Arn        string //only required if AccessType is Instance
+	Arn        string //only required if AccessType is instanceassume
+	ExternalId string
 	Region     string
 	AccessType string
 	Profile    string
@@ -45,6 +48,7 @@ func (account AccountInfo) GetSession() (*session.Session, error) {
 	if account.Region == "" {
 		account.Region = "us-east-1"
 	}
+	var err error
 	switch account.AccessType {
 	case "assume":
 		sess = AssumeRoleWithProfile(account)
@@ -52,11 +56,13 @@ func (account AccountInfo) GetSession() (*session.Session, error) {
 		sess = OpenSession(account.Profile, account.Region)
 	case "instance":
 		sess = session.Must(session.NewSession())
-	//TODO implement instanceassume
-	//case "instanceassume":
-	//	sess = AssumeRoleWithInstance(account)
+	case "instanceassume":
+		sess, err = AssumeRoleWithInstance(account)
 	default:
 		return nil, fmt.Errorf("no valid options in Access Type specified.  Needs 'assume', 'profile', 'instance', or 'instanceassume'")
+	}
+	if err != nil {
+		return nil, err
 	}
 	return sess, nil
 }
@@ -74,29 +80,38 @@ func AssumeRoleWithProfile(account AccountInfo) *session.Session {
 }
 
 //Assumes the role of the given arn with the instance profile and returns a session into the account associated with the arn
-//func AssumeRoleWithInstance(account AccountInfo) *session.Session {
-//	//open a new session with the instance profile
-//	sess := session.Must(session.NewSession())
-//	svc := sts.New(sess)
-//	arn := account.Arn
-//	region := account.Region
-//
-//	params := &sts.AssumeRoleInput{
-//		RoleArn:         aws.String(arn),            // Required
-//		//TODO decide on role session name
-//		RoleSessionName: aws.String(), // Required
-//		DurationSeconds: aws.Int64(900),
-//	}
-//	//AssumeRole gets an Access Key, Secret Key, and Session Token into the client account with the provided arn
-//	resp, _ := svc.AssumeRole(params)
-//
-//	id := *resp.Credentials.AccessKeyId
-//	secret := *resp.Credentials.SecretAccessKey
-//	token := *resp.Credentials.SessionToken
-//	//NewStaticCredentials gives the new session the credentials to use when opening the new session, based on the credentials from the AssumeRole response
-//	newSess := session.Must(session.NewSessionWithOptions(session.Options{Config: aws.Config{Region: aws.String(region), Credentials: credentials.NewStaticCredentials(id, secret, token)}}))
-//	return newSess
-//}
+func AssumeRoleWithInstance(account AccountInfo) (*session.Session, error) {
+	//open a new session with the instance profile
+	sess := session.Must(session.NewSession())
+	svc := sts.New(sess)
+
+	params := &sts.AssumeRoleInput{
+		RoleArn:         aws.String(account.Arn),       // Required
+		RoleSessionName: aws.String(""), // Required
+		DurationSeconds: aws.Int64(900),
+	}
+	if account.ExternalId != "" {
+		params.ExternalId = &account.ExternalId
+	}
+
+	//AssumeRole gets an Access Key, Secret Key, and Session Token into the client account with the provided arn
+	resp, _ := svc.AssumeRole(params)
+
+	if resp.Credentials == nil {
+		log.Println("could not assume role properly")
+		log.Println("Arn:", account.Arn)
+		log.Println("Region:", account.Region)
+		log.Println("SessionType:", account.AccessType)
+		return nil, fmt.Errorf("could not assume role")
+	}
+
+	id := *resp.Credentials.AccessKeyId
+	secret := *resp.Credentials.SecretAccessKey
+	token := *resp.Credentials.SessionToken
+	//NewStaticCredentials gives the new session the credentials to use when opening the new session, based on the credentials from the AssumeRole response
+	newSess := session.Must(session.NewSessionWithOptions(session.Options{Config: aws.Config{Region: aws.String(account.Region), Credentials: credentials.NewStaticCredentials(id, secret, token)}}))
+	return newSess, nil
+}
 
 //This is a helper func to load the ~/.aws/config file
 func LoadConfigFile() {

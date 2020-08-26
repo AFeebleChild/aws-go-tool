@@ -204,38 +204,6 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 					pemKey = *instance.KeyName
 				}
 
-				//x := true
-				//for _, key := range pemKeys {
-				//	if pemKey == key {
-				//		x = false
-				//		break
-				//	}
-				//}
-				//if x {
-				//	xx := true
-				//	for _, tag := range instance.Tags {
-				//		if *tag.Key == "infra_msp" && *tag.Value != "2w"{
-				//			xx = false
-				//		}
-				//	}
-				//	if xx {
-				//		pemKeys = append(pemKeys, pemKey)
-				//		fmt.Fprintln(pemKeyFile, pemKey, ",", regionInstances.Profile)
-				//	}
-				//}
-
-				//If the instance is running, get the instance state
-				//Code 16 is instance running
-				//var systemCheck, instanceCheck string
-				//if *instance.State.Code == 16 {
-				//	for _, status := range regionInstances.Status {
-				//		if *instance.InstanceId == *status.InstanceId {
-				//			systemCheck = *status.SystemStatus.Status
-				//			instanceCheck = *status.InstanceStatus.Status
-				//		}
-				//	}
-				//}
-
 				var vpcId string
 				if instance.VpcId != nil {
 					vpcId = *instance.VpcId
