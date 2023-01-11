@@ -20,17 +20,8 @@ var subnetsListCmd = &cobra.Command{
 	Use:   "subnetslist",
 	Short: "Will generate a report of vpc info for all given accounts",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesSubnets, err := vpc.GetProfilesSubnets(accounts)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		profilesSubnets, err := vpc.GetProfilesSubnets(Accounts)
+		utils.Check(err)
 		//var tags []string
 		//if TagFile != "" {
 		//	tags, err = utils.ReadFile(TagFile)
@@ -42,10 +33,7 @@ var subnetsListCmd = &cobra.Command{
 		//}
 		//options := utils.Ec2Options{Tags:tags}
 		err = vpc.WriteProfilesSubnets(profilesSubnets)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		utils.Check(err)
 	},
 }
 
@@ -53,17 +41,8 @@ var vpcsListCmd = &cobra.Command{
 	Use:   "vpcslist",
 	Short: "Will generate a report of vpc info for all given accounts",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesVpcs, err := vpc.GetProfilesVpcs(accounts)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		profilesVpcs, err := vpc.GetProfilesVpcs(Accounts)
+		utils.Check(err)
 		//var tags []string
 		//if TagFile != "" {
 		//	tags, err = utils.ReadFile(TagFile)
@@ -75,10 +54,7 @@ var vpcsListCmd = &cobra.Command{
 		//}
 		//options := utils.Ec2Options{Tags:tags}
 		err = vpc.WriteProfilesVpcs(profilesVpcs)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
+		utils.Check(err)
 	},
 }
 
