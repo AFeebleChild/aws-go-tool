@@ -1,4 +1,4 @@
-// Copyright © 2018 NAME HERE <EMAIL ADDRESS>
+// Copyright © 2018 NAME HERE afeeblechild@gmail.com
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -26,10 +27,14 @@ import (
 var (
 	cfgFile string
 
+	// CLI Flags
 	AccessType   string
 	OutputDir    string
 	ProfilesFile string
 	TagFile      string
+
+	// Root persistent post run vars
+	Accounts []utils.AccountInfo
 
 	LogFile *os.File
 )
@@ -43,6 +48,14 @@ There are some parts of the tool that are just for single accounts as well.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	//	Run: func(cmd *cobra.Command, args []string) { },
+	PersistentPostRun: func(cmd *cobra.Command, args[]string){
+		var err error
+		Accounts, err = utils.BuildAccountsSlice(ProfilesFile, AccessType)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
