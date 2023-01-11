@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/afeeblechild/aws-go-tool/lib/ssm"
 	"github.com/afeeblechild/aws-go-tool/lib/utils"

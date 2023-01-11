@@ -2,8 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
-	"os"
 
 	"github.com/afeeblechild/aws-go-tool/lib/ec2"
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
