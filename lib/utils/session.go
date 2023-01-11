@@ -3,7 +3,6 @@ package utils
 import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/credentials"
-	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -30,7 +29,7 @@ type AccountInfo struct {
 	Profile    string
 }
 
-//GetAccountId will get the account ID for the profile currently in use for the session
+// GetAccountId will get the account ID for the profile currently in use for the session
 func GetAccountId(sess *session.Session) (string, error) {
 	params := &sts.GetCallerIdentityInput{}
 
@@ -51,11 +50,11 @@ func (account AccountInfo) GetSession() (*session.Session, error) {
 	var err error
 	switch account.AccessType {
 	case "assume":
-		sess = AssumeRoleWithProfile(account)
+		sess, err = AssumeRoleWithProfile(account)
 	case "profile":
-		sess = OpenSession(account.Profile, account.Region)
+		sess, err = OpenSession(account.Profile, account.Region)
 	case "instance":
-		sess = session.Must(session.NewSession())
+		sess, err = session.NewSession()
 	case "instanceassume":
 		sess, err = AssumeRoleWithInstance(account)
 	default:
@@ -67,27 +66,27 @@ func (account AccountInfo) GetSession() (*session.Session, error) {
 	return sess, nil
 }
 
-func OpenSession(profile string, region string) *session.Session {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{Config: aws.Config{Region: aws.String(region)}, Profile: profile}))
-	return sess
+func OpenSession(profile string, region string) (*session.Session, error) {
+	sess, err := session.NewSessionWithOptions(session.Options{Config: aws.Config{Region: aws.String(region)}, Profile: profile})
+	return sess, err
 }
 
-//Assumes the role of the specified profile
-func AssumeRoleWithProfile(account AccountInfo) *session.Session {
+// Assumes the role of the specified profile
+func AssumeRoleWithProfile(account AccountInfo) (*session.Session, error) {
 	LoadConfigFile()
-	sess := session.Must(session.NewSessionWithOptions(session.Options{Config: aws.Config{Region: aws.String(account.Region)}, Profile: account.Profile, SharedConfigState: session.SharedConfigEnable}))
-	return sess
+	sess, err := session.NewSessionWithOptions(session.Options{Config: aws.Config{Region: aws.String(account.Region)}, Profile: account.Profile, SharedConfigState: session.SharedConfigEnable})
+	return sess, err
 }
 
-//Assumes the role of the given arn with the instance profile and returns a session into the account associated with the arn
+// Assumes the role of the given arn with the instance profile and returns a session into the account associated with the arn
 func AssumeRoleWithInstance(account AccountInfo) (*session.Session, error) {
 	//open a new session with the instance profile
 	sess := session.Must(session.NewSession())
 	svc := sts.New(sess)
 
 	params := &sts.AssumeRoleInput{
-		RoleArn:         aws.String(account.Arn),       // Required
-		RoleSessionName: aws.String(""), // Required
+		RoleArn:         aws.String(account.Arn),
+		RoleSessionName: aws.String(""),
 		DurationSeconds: aws.Int64(900),
 	}
 	if account.ExternalId != "" {
@@ -98,11 +97,7 @@ func AssumeRoleWithInstance(account AccountInfo) (*session.Session, error) {
 	resp, _ := svc.AssumeRole(params)
 
 	if resp.Credentials == nil {
-		log.Println("could not assume role properly")
-		log.Println("Arn:", account.Arn)
-		log.Println("Region:", account.Region)
-		log.Println("SessionType:", account.AccessType)
-		return nil, fmt.Errorf("could not assume role")
+		return nil, fmt.Errorf("could not assume role: %s", account.Arn)
 	}
 
 	id := *resp.Credentials.AccessKeyId
@@ -113,7 +108,7 @@ func AssumeRoleWithInstance(account AccountInfo) (*session.Session, error) {
 	return newSess, nil
 }
 
-//This is a helper func to load the ~/.aws/config file
+// This is a helper func to load the ~/.aws/config file
 func LoadConfigFile() {
 	os.Setenv("AWS_SDK_LOAD_CONFIG", string(1))
 }
