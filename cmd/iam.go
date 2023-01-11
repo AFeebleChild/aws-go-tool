@@ -25,17 +25,8 @@ var policiesListCmd = &cobra.Command{
 	Use:   "policieslist",
 	Short: "Will generate a report of policies",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesPolicies, err := iam.GetProfilesPolicies(accounts)
-		if err != nil {
-			fmt.Println("Could not get policies from all profiles", err)
-			return
-		}
+		profilesPolicies, err := iam.GetProfilesPolicies(Accounts)
+		utils.Check(err)
 		iam.WriteProfilesPolicies(profilesPolicies)
 	},
 }
@@ -44,17 +35,8 @@ var rolesListCmd = &cobra.Command{
 	Use:   "roleslist",
 	Short: "Will generate a report of roles",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesRoles, err := iam.GetProfilesRoles(accounts)
-		if err != nil {
-			fmt.Println("Could not get roles from all profiles", err)
-			return
-		}
+		profilesRoles, err := iam.GetProfilesRoles(Accounts)
+		utils.Check(err)
 		iam.WriteProfilesRoles(profilesRoles)
 	},
 }
@@ -66,9 +48,7 @@ var rolesUpdateCmd = &cobra.Command{
 		//TODO update this entire function
 		//add cli parameter for duration
 		err := iam.UpdateProfilesRolesSessionDuration(RolesFile, 28800)
-		if err != nil {
-			panic(err)
-		}
+		utils.Check(err)
 	},
 }
 
@@ -76,17 +56,8 @@ var usersListCmd = &cobra.Command{
 	Use:   "userslist",
 	Short: "Will generate a report of users",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesUsers, err := iam.GetProfilesUsers(accounts)
-		if err != nil {
-			fmt.Println("Could not get users from all profiles", err)
-			return
-		}
+		profilesUsers, err := iam.GetProfilesUsers(Accounts)
+		utils.Check(err)
 		iam.WriteProfilesUsers(profilesUsers)
 	},
 }
@@ -96,19 +67,12 @@ var userUpdatePWCmd = &cobra.Command{
 	Use:   "userupdatepw",
 	Short: "Will update the users password",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		for _, account := range accounts {
+		for _, account := range Accounts {
 			sess := utils.OpenSession(account.Profile, "us-east-1")
 			user := iam.UserUpdate{Username: Username, ResetRequired: false}
 			password, err := iam.UpdateUserPassword(user, sess)
 			if err != nil {
-				//TODO better logging
-				fmt.Println("could not update pw:", err)
+				utils.LogAll("could not update pw:", err)
 			}
 			//TODO better output for passwords
 			fmt.Println(password)
