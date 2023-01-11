@@ -20,17 +20,8 @@ var bucketsListCmd = &cobra.Command{
 	Use:   "bucketslist",
 	Short: "Will generate a report of bucket info for all given accounts",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			utils.LogAll("could not get accounts:", err)
-			return
-		}
-
-		profilesBuckets, err := s3.GetProfilesBuckets(accounts)
-		if err != nil {
-			utils.LogAll("could not get buckets:", err)
-			return
-		}
+		profilesBuckets, err := s3.GetProfilesBuckets(Accounts)
+		utils.Check(err)
 		//TODO add tag support
 		//var tags []string
 		//if TagFile != "" {
@@ -43,10 +34,7 @@ var bucketsListCmd = &cobra.Command{
 		//}
 		//options := utils.Ec2Options{Tags:tags}
 		err = s3.WriteProfilesBuckets(profilesBuckets)
-		if err != nil {
-			utils.LogAll("could not write buckets:", err)
-			return
-		}
+		utils.Check(err)
 	},
 }
 
@@ -54,37 +42,23 @@ var fileSizeCmd = &cobra.Command{
 	Use:   "filesize",
 	Short: "To get the size of objects in buckets per object type",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			utils.LogAll("could not build account slice:", err)
-			return
-		}
 		if BucketFile == "public-only" {
-			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(accounts, "public-only")
+			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(Accounts, "public-only")
 			//_, err := s3.GetProfilesPublicBucketsFileSize(accounts)
+			utils.Check(err)
 
-			if err != nil {
-				utils.LogAll("could not get profiles buckets:", err)
-				return
-			}
 			s3.WriteProfilesBucketsFileSize(bucketsInfo)
 			//utils.PrettyPrintJson(bucketsInfo)
 		} else if BucketFile == "all" {
-			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(accounts, "public-only")
+			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(Accounts, "")
 			//_, err := s3.GetProfilesPublicBucketsFileSize(accounts)
+			utils.Check(err)
 
-			if err != nil {
-				utils.LogAll("could not get profiles buckets:", err)
-				return
-			}
 			s3.WriteProfilesBucketsFileSize(bucketsInfo)
 			//utils.PrettyPrintJson(bucketsInfo)
 		} else {
 			buckets, err := utils.ReadFile(BucketFile)
-			if err != nil {
-				utils.LogAll("could not read buckets file:", err)
-				return
-			}
+			utils.Check(err)
 
 			var bucketsInfo []s3.BucketInfo
 			for _, bucket := range buckets {
@@ -92,11 +66,8 @@ var fileSizeCmd = &cobra.Command{
 				bucketsInfo = append(bucketsInfo, bucketInfo)
 			}
 
-			bucketsSizeInfo, err := s3.GetProfileBucketsFileSize(bucketsInfo, accounts[0])
-			if err != nil {
-				utils.LogAll("could not get buckets size info:", err)
-				return
-			}
+			bucketsSizeInfo, err := s3.GetProfileBucketsFileSize(bucketsInfo, Accounts[0])
+			utils.Check(err)
 			utils.PrettyPrintJson(bucketsSizeInfo)
 		}
 		//for _, bucketInfo := range bucketsInfo {
