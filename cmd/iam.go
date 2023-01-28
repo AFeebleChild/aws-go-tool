@@ -68,7 +68,10 @@ var userUpdatePWCmd = &cobra.Command{
 	Short: "Will update the users password",
 	Run: func(cmd *cobra.Command, args []string) {
 		for _, account := range Accounts {
-			sess := utils.OpenSession(account.Profile, "us-east-1")
+			sess, err := utils.OpenSession(account.Profile, "us-east-1")
+			if err != nil {
+				utils.LogAll("could not open session:", err)
+			}
 			user := iam.UserUpdate{Username: Username, ResetRequired: false}
 			password, err := iam.UpdateUserPassword(user, sess)
 			if err != nil {

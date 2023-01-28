@@ -184,10 +184,13 @@ func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
 		//check if the last role is in the same account as the lastest, to reuse the session
 		if profileCompare == "" {
 			profileCompare = profile
-			sess = utils.OpenSession(profile, "us-east-1")
+			sess, err = utils.OpenSession(profile, "us-east-1")
 		} else if profileCompare != "" && profile != profileCompare {
 			profileCompare = profile
-			sess = utils.OpenSession(profile, "us-east-1")
+			sess, err = utils.OpenSession(profile, "us-east-1")
+		}
+		if err != nil {
+			utils.LogAll("could not open session:", err)
 		}
 
 		params := &iam.UpdateRoleInput{
@@ -199,7 +202,7 @@ func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
 		_, err := iam.New(sess).UpdateRole(params)
 		if err != nil {
 			//TODO update logging to output to log file
-			fmt.Println("Could not update role", role, "in profile", profile, ":", err)
+			utils.LogAll("Could not update role", role, "in profile", profile, ":", err)
 		}
 	}
 	return nil
