@@ -25,17 +25,8 @@ var bucketsListCmd = &cobra.Command{
 			utils.LogAll("could not get buckets:", err)
 			return
 		}
-		//TODO add tag support
-		//var tags []string
-		//if TagFile != "" {
-		//	tags, err = utils.ReadFile(TagFile)
-		//	if err != nil {
-		//		log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-		//		fmt.Println("could not open tagFile:", err)
-		//		fmt.Println("continuing without tags in output")
-		//	}
-		//}
-		//options := utils.Ec2Options{Tags:tags}
+		// TODO add tag support
+		//options := utils.Ec2Options{Tags:Tags}
 		err = s3.WriteProfilesBuckets(profilesBuckets)
 		if err != nil {
 			utils.LogAll("could not write buckets:", err)

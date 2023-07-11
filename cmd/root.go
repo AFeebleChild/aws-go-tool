@@ -27,14 +27,18 @@ import (
 var (
 	cfgFile string
 
+	// Input flags
 	AccessType   string
 	OutputDir    string
 	ProfilesFile string
 	TagFile      string
 
+	// Set in init()
 	LogFile *os.File
 
+	// Set in RootCmd.PersistentPostRun
 	Accounts []utils.AccountInfo
+	Tags []string
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -47,8 +51,15 @@ There are some parts of the tool that are just for single accounts as well.`,
 		var err error
 		Accounts, err = utils.BuildAccountsSlice(ProfilesFile, AccessType)
 		if err != nil {
-			fmt.Println("error building accounts slice:", err)
+			utils.LogAll("error building accounts slice:", err)
 			os.Exit(1)
+		}
+
+		if TagFile != "" {
+			Tags, err = utils.ReadFile(TagFile)
+			if err != nil {
+				utils.LogAll("could not open tagFile:", err, "\ncontinuing without tags in output")
+			}
 		}
 	},
 }

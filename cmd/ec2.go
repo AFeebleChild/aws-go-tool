@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/afeeblechild/aws-go-tool/lib/ec2"
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
@@ -26,16 +25,12 @@ var imagesCheckCmd = &cobra.Command{
 	Short: "Will generate a report of images in use by instances in the account.",
 	Run: func(cmd *cobra.Command, args []string) {
 		checkedImages, err := ec2.CheckImages(Accounts)
-
-		var tags []string
-		if TagFile != "" {
-			tags, err = utils.ReadFile(TagFile)
-			if err != nil {
-				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-				fmt.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-			}
+		if err != nil {
+			fmt.Println(err)
+			return
 		}
-		options := utils.Ec2Options{Tags: tags}
+
+		options := utils.Ec2Options{Tags: Tags}
 		err = ec2.WriteCheckedImages(checkedImages, options)
 		if err != nil {
 			fmt.Println(err)
@@ -53,15 +48,8 @@ var imagesListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		var tags []string
-		if TagFile != "" {
-			tags, err = utils.ReadFile(TagFile)
-			if err != nil {
-				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-				fmt.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-			}
-		}
-		options := utils.Ec2Options{Tags: tags}
+
+		options := utils.Ec2Options{Tags: Tags}
 		err = ec2.WriteProfilesImages(profilesImages, options)
 		if err != nil {
 			fmt.Println(err)
@@ -79,15 +67,7 @@ var instancesListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		var tags []string
-		if TagFile != "" {
-			tags, err = utils.ReadFile(TagFile)
-			if err != nil {
-				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-				fmt.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-			}
-		}
-		options := utils.Ec2Options{Tags: tags}
+		options := utils.Ec2Options{Tags: Tags}
 		err = ec2.WriteProfilesInstances(profilesInstances, options)
 		if err != nil {
 			fmt.Println(err)
@@ -105,15 +85,7 @@ var sgsListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		var tags []string
-		if TagFile != "" {
-			tags, err = utils.ReadFile(TagFile)
-			if err != nil {
-				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-				fmt.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-			}
-		}
-		options := ec2.SGOptions{Tags: tags}
+		options := ec2.SGOptions{Tags: Tags}
 		err = ec2.WriteProfilesSgs(profilesSGs, options)
 		if err != nil {
 			fmt.Println(err)
@@ -131,15 +103,7 @@ var sgsRulesListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		var tags []string
-		if TagFile != "" {
-			tags, err = utils.ReadFile(TagFile)
-			if err != nil {
-				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-				fmt.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-			}
-		}
-		options := ec2.SGOptions{Tags: tags}
+		options := ec2.SGOptions{Tags: Tags}
 		options.Cidr = Cidr
 		err = ec2.WriteProfilesSgRules(profilesSGs, options)
 		if err != nil {
@@ -158,15 +122,7 @@ var snapshotsListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		var tags []string
-		if TagFile != "" {
-			tags, err = utils.ReadFile(TagFile)
-			if err != nil {
-				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-				fmt.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-			}
-		}
-		options := utils.Ec2Options{Tags: tags}
+		options := utils.Ec2Options{Tags: Tags}
 		err = ec2.WriteProfilesSnapshots(profilesSnapshots, options)
 		if err != nil {
 			fmt.Println(err)
@@ -184,15 +140,7 @@ var volumesListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		var tags []string
-		if TagFile != "" {
-			tags, err = utils.ReadFile(TagFile)
-			if err != nil {
-				log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-				fmt.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-			}
-		}
-		options := utils.Ec2Options{Tags: tags}
+		options := utils.Ec2Options{Tags: Tags}
 		err = ec2.WriteProfilesVolumes(profilesVolumes, options)
 		if err != nil {
 			fmt.Println(err)

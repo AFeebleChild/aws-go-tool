@@ -82,11 +82,9 @@ Name4
 - Workspaces (in progress)
 
 ### TODO
-- Rework utils.BuildAccountsSlice to be a global variable, and not needed to be called on every cli command.
 - Add printer function for csv
 - Add global option for yaml, json, or csv output
     - Update print functions to have yaml/yaml config to determine what to output in the report
-- Add utils file in cmd to have an easier wrapper func to build account list, get tags, logging, etc.
 - Add logging for functions as they are called
 - Update the userslist function to include access key information per user
 - Update SSM documentation

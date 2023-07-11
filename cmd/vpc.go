@@ -24,16 +24,7 @@ var subnetsListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		//var tags []string
-		//if TagFile != "" {
-		//	tags, err = utils.ReadFile(TagFile)
-		//	if err != nil {
-		//		log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-		//		fmt.Println("could not open tagFile:", err)
-		//		fmt.Println("continuing without tags in output")
-		//	}
-		//}
-		//options := utils.Ec2Options{Tags:tags}
+		//options := utils.Ec2Options{Tags:Tags}
 		err = vpc.WriteProfilesSubnets(profilesSubnets)
 		if err != nil {
 			fmt.Println(err)
@@ -51,16 +42,7 @@ var vpcsListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		//var tags []string
-		//if TagFile != "" {
-		//	tags, err = utils.ReadFile(TagFile)
-		//	if err != nil {
-		//		log.Println("could not open tagFile:", err, "\ncontinuing without tags in output")
-		//		fmt.Println("could not open tagFile:", err)
-		//		fmt.Println("continuing without tags in output")
-		//	}
-		//}
-		//options := utils.Ec2Options{Tags:tags}
+		//options := utils.Ec2Options{Tags:Tags}
 		err = vpc.WriteProfilesVpcs(profilesVpcs)
 		if err != nil {
 			fmt.Println(err)
