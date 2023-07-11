@@ -19,6 +19,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -32,6 +33,8 @@ var (
 	TagFile      string
 
 	LogFile *os.File
+
+	Accounts []utils.AccountInfo
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -40,19 +43,24 @@ var RootCmd = &cobra.Command{
 	Short: "aws-go-tool is an interface to use with aws accounts",
 	Long: `The tool is designed around reporting and interacting with multiple aws accounts.
 There are some parts of the tool that are just for single accounts as well.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
+	PersistentPostRun: func(cmd *cobra.Command, args []string){
+		var err error
+		Accounts, err = utils.BuildAccountsSlice(ProfilesFile, AccessType)
+		if err != nil {
+			fmt.Println("error building accounts slice:", err)
+			os.Exit(1)
+		}
+	},
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	defer LogFile.Close()
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
-	defer LogFile.Close()
 }
 
 func init() {
@@ -61,7 +69,6 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
-
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.aws-go-tool.yaml)")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.

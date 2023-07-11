@@ -25,13 +25,7 @@ var policiesListCmd = &cobra.Command{
 	Use:   "policieslist",
 	Short: "Will generate a report of policies",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesPolicies, err := iam.GetProfilesPolicies(accounts)
+		profilesPolicies, err := iam.GetProfilesPolicies(Accounts)
 		if err != nil {
 			fmt.Println("Could not get policies from all profiles", err)
 			return
@@ -44,13 +38,7 @@ var rolesListCmd = &cobra.Command{
 	Use:   "roleslist",
 	Short: "Will generate a report of roles",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesRoles, err := iam.GetProfilesRoles(accounts)
+		profilesRoles, err := iam.GetProfilesRoles(Accounts)
 		if err != nil {
 			fmt.Println("Could not get roles from all profiles", err)
 			return
@@ -76,13 +64,7 @@ var usersListCmd = &cobra.Command{
 	Use:   "userslist",
 	Short: "Will generate a report of users",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesUsers, err := iam.GetProfilesUsers(accounts)
+		profilesUsers, err := iam.GetProfilesUsers(Accounts)
 		if err != nil {
 			fmt.Println("Could not get users from all profiles", err)
 			return
@@ -96,13 +78,7 @@ var userUpdatePWCmd = &cobra.Command{
 	Use:   "userupdatepw",
 	Short: "Will update the users password",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		for _, account := range accounts {
+		for _, account := range Accounts {
 			sess := utils.OpenSession(account.Profile, "us-east-1")
 			user := iam.UserUpdate{Username: Username, ResetRequired: false}
 			password, err := iam.UpdateUserPassword(user, sess)

@@ -26,13 +26,7 @@ var removeDocumentPermissionsCmd = &cobra.Command{
 	Use:   "removedocumentpermissions",
 	Short: "remove permissions from private ssm document",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		err = ssm.RemoveDocumentPermissionsFromAccounts(accounts, AccountIdsFile, DocumentName)
+		err := ssm.RemoveDocumentPermissionsFromAccounts(Accounts, AccountIdsFile, DocumentName)
 		if err != nil {
 			utils.LogAll("could not remove permissions:", err)
 			os.Exit(1)

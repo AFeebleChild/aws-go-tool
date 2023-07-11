@@ -20,13 +20,7 @@ var bucketsListCmd = &cobra.Command{
 	Use:   "bucketslist",
 	Short: "Will generate a report of bucket info for all given accounts",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			utils.LogAll("could not get accounts:", err)
-			return
-		}
-
-		profilesBuckets, err := s3.GetProfilesBuckets(accounts)
+		profilesBuckets, err := s3.GetProfilesBuckets(Accounts)
 		if err != nil {
 			utils.LogAll("could not get buckets:", err)
 			return
@@ -54,31 +48,22 @@ var fileSizeCmd = &cobra.Command{
 	Use:   "filesize",
 	Short: "To get the size of objects in buckets per object type",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			utils.LogAll("could not build account slice:", err)
-			return
-		}
 		if BucketFile == "public-only" {
-			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(accounts, "public-only")
-			//_, err := s3.GetProfilesPublicBucketsFileSize(accounts)
+			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(Accounts, "public-only")
 
 			if err != nil {
 				utils.LogAll("could not get profiles buckets:", err)
 				return
 			}
 			s3.WriteProfilesBucketsFileSize(bucketsInfo)
-			//utils.PrettyPrintJson(bucketsInfo)
 		} else if BucketFile == "all" {
-			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(accounts, "public-only")
-			//_, err := s3.GetProfilesPublicBucketsFileSize(accounts)
+			bucketsInfo, err := s3.GetProfilesPublicBucketsFileSize(Accounts, "public-only")
 
 			if err != nil {
 				utils.LogAll("could not get profiles buckets:", err)
 				return
 			}
 			s3.WriteProfilesBucketsFileSize(bucketsInfo)
-			//utils.PrettyPrintJson(bucketsInfo)
 		} else {
 			buckets, err := utils.ReadFile(BucketFile)
 			if err != nil {
@@ -92,7 +77,7 @@ var fileSizeCmd = &cobra.Command{
 				bucketsInfo = append(bucketsInfo, bucketInfo)
 			}
 
-			bucketsSizeInfo, err := s3.GetProfileBucketsFileSize(bucketsInfo, accounts[0])
+			bucketsSizeInfo, err := s3.GetProfileBucketsFileSize(bucketsInfo, Accounts[0])
 			if err != nil {
 				utils.LogAll("could not get buckets size info:", err)
 				return

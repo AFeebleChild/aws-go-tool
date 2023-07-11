@@ -25,13 +25,7 @@ var imagesCheckCmd = &cobra.Command{
 	Use:   "imagescheck",
 	Short: "Will generate a report of images in use by instances in the account.",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		checkedImages, err := ec2.CheckImages(accounts)
+		checkedImages, err := ec2.CheckImages(Accounts)
 
 		var tags []string
 		if TagFile != "" {
@@ -54,13 +48,7 @@ var imagesListCmd = &cobra.Command{
 	Use:   "imageslist",
 	Short: "Will generate a report of all images for all given accounts.",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesImages, err := ec2.GetProfilesImages(accounts)
+		profilesImages, err := ec2.GetProfilesImages(Accounts)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -86,13 +74,7 @@ var instancesListCmd = &cobra.Command{
 	Use:   "instanceslist",
 	Short: "Will generate a report of all instances for all given accounts.",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesInstances, err := ec2.GetProfilesInstances(accounts)
+		profilesInstances, err := ec2.GetProfilesInstances(Accounts)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -118,13 +100,7 @@ var sgsListCmd = &cobra.Command{
 	Use:   "sgslist",
 	Short: "Will generate a report of all security groups for all given accounts.",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesSGs, err := ec2.GetProfilesSGs(accounts)
+		profilesSGs, err := ec2.GetProfilesSGs(Accounts)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -150,13 +126,7 @@ var sgsRulesListCmd = &cobra.Command{
 	Use:   "sgruleslist",
 	Short: "Will generate a report of all security group rules for all given accounts",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesSGs, err := ec2.GetProfilesSGs(accounts)
+		profilesSGs, err := ec2.GetProfilesSGs(Accounts)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -183,13 +153,7 @@ var snapshotsListCmd = &cobra.Command{
 	Use:   "snapshotslist",
 	Short: "Will generate a report of all snapshots for all given accounts.",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesSnapshots, err := ec2.GetProfilesSnapshots(accounts)
+		profilesSnapshots, err := ec2.GetProfilesSnapshots(Accounts)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -215,13 +179,7 @@ var volumesListCmd = &cobra.Command{
 	Use:   "volumeslist",
 	Short: "Will generate a report of all volumes for all given accounts.",
 	Run: func(cmd *cobra.Command, args []string) {
-		accounts, err := utils.BuildAccountsSlice(ProfilesFile, AccessType)
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-
-		profilesVolumes, err := ec2.GetProfilesVolumes(accounts)
+		profilesVolumes, err := ec2.GetProfilesVolumes(Accounts)
 		if err != nil {
 			fmt.Println(err)
 			return
