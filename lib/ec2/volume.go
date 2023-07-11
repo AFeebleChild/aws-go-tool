@@ -127,7 +127,7 @@ func WriteProfilesVolumes(profileVolumes ProfilesVolumes, options utils.Ec2Optio
 	outputFile := outputDir + "volumes.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create volumes file", err)
+		return fmt.Errorf("could not create volumes file: %v", err)
 	}
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()

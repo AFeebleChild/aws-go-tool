@@ -140,7 +140,7 @@ func WriteProfilesSgs(profileSGs ProfilesSGs, options SGOptions) error {
 	outfile, err := utils.CreateFile(outputFile)
 	fmt.Println("Writing SGs to file:", outfile.Name())
 	if err != nil {
-		return fmt.Errorf("could not create sgs file", err)
+		return fmt.Errorf("could not create sgs file: %v", err)
 	}
 
 	writer := csv.NewWriter(outfile)
@@ -209,7 +209,7 @@ func WriteProfilesSgRules(profileSGs ProfilesSGs, options SGOptions) error {
 	outfile, err := utils.CreateFile(outputFile)
 	fmt.Println("Writing SG Rules to file:", outfile.Name())
 	if err != nil {
-		return fmt.Errorf("could not create sgRules file", err)
+		return fmt.Errorf("could not create sgRules file: %v", err)
 	}
 
 	writer := csv.NewWriter(outfile)

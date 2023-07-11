@@ -44,7 +44,7 @@ func GetRegionImages(sess *session.Session) ([]ec2.Image, error) {
 	var amis []ec2.Image
 	AccountID, err := utils.GetAccountId(sess)
 	if err != nil {
-		return amis, fmt.Errorf("could not get account id:", err)
+		return amis, fmt.Errorf("could not get account id: %v", err)
 	}
 	params := &ec2.DescribeImagesInput{
 		DryRun: aws.Bool(false),
@@ -148,7 +148,7 @@ func WriteProfilesImages(profileImages ProfilesImages, options utils.Ec2Options)
 	outputFile := outputDir + "images.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create images file", err)
+		return fmt.Errorf("could not create images file: %v", err)
 	}
 
 	writer := csv.NewWriter(outfile)
@@ -230,11 +230,11 @@ func WriteProfilesImages(profileImages ProfilesImages, options utils.Ec2Options)
 func CheckImages(accounts []utils.AccountInfo) ([]ImageInfo, error) {
 	profilesImages, err := GetProfilesImages(accounts)
 	if err != nil {
-		return nil, fmt.Errorf("could not get profiles images:", err)
+		return nil, fmt.Errorf("could not get profiles images: %v", err)
 	}
 	profilesInstances, err := GetProfilesInstances(accounts)
 	if err != nil {
-		return nil, fmt.Errorf("could not get profiles instances:", err)
+		return nil, fmt.Errorf("could not get profiles instances: %v", err)
 	}
 
 	var checkedImages []ImageInfo
@@ -286,7 +286,7 @@ func WriteCheckedImages(checkedImages []ImageInfo, options utils.Ec2Options) err
 	outputFile := outputDir + "checkedImages.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create checkedImages file", err)
+		return fmt.Errorf("could not create checkedImages file: %v", err)
 	}
 
 	writer := csv.NewWriter(outfile)
@@ -365,21 +365,3 @@ func WriteCheckedImages(checkedImages []ImageInfo, options utils.Ec2Options) err
 	}
 	return nil
 }
-
-//func ValidateImages() {
-//
-//	//option to pass in csv from WriteCheckedImages output
-//	//option to just call CheckImages and use images from there
-//	//"are you sure" validation check as instances will be created
-//
-//	params := &ec2.RunInstancesInput{
-//		ImageId: ,
-//		InstanceType: aws.String("t3.nano"),
-//		MaxCount: aws.Int64(1),
-//		MinCount: aws.Int64(1),
-//		SecurityGroupIds: aws.StringSlice(),
-//		SubnetId: aws.StringSlice(),//pass in with csv?
-//		TagSpecifications: //[]*TagSpecification
-//	}
-//
-//}

@@ -48,7 +48,7 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 	for x {
 		resp, err := svc.ListRoles(params)
 		if err != nil {
-			return nil, fmt.Errorf("could not get roles", err)
+			return nil, fmt.Errorf("could not get roles: %v", err)
 		}
 		for _, role := range resp.Roles {
 			roles = append(roles, *role)
@@ -73,7 +73,7 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 		for x {
 			resp, err := svc.ListRolePolicies(inlineParams)
 			if err != nil {
-				return nil, fmt.Errorf("could not get inline role policies", err)
+				return nil, fmt.Errorf("could not get inline role policies: %v", err)
 			}
 
 			tempInfo.Role = role
@@ -94,7 +94,7 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 		for x {
 			resp, err := svc.ListAttachedRolePolicies(attachedParams)
 			if err != nil {
-				return nil, fmt.Errorf("could not get inline role policies", err)
+				return nil, fmt.Errorf("could not get inline role policies: %v", err)
 			}
 
 			tempInfo.Role = role
@@ -198,8 +198,7 @@ func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
 		fmt.Printf("In profile %s, updating role %s\n", profile, role)
 		_, err := iam.New(sess).UpdateRole(params)
 		if err != nil {
-			//TODO update logging to output to log file
-			fmt.Println("Could not update role", role, "in profile", profile, ":", err)
+			utils.LogAll("Could not update role", role, "in profile", profile, ":", err)
 		}
 	}
 	return nil
@@ -211,7 +210,7 @@ func WriteProfilesRoles(profilesRoles ProfilesRoles) error {
 	outputFile := outputDir + "roles.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create roles file", err)
+		return fmt.Errorf("could not create roles file: %v", err)
 	}
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()

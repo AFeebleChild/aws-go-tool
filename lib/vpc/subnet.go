@@ -166,7 +166,7 @@ func WriteProfilesSubnets(profileSubnets ProfilesSubnets) error {
 	outputFile := outputDir + "subnets.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create subnets file", err)
+		return fmt.Errorf("could not create subnets file: %v", err)
 	}
 
 	writer := csv.NewWriter(outfile)

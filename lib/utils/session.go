@@ -2,11 +2,12 @@ package utils
 
 import (
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"log"
 	"os"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sts"
 )
@@ -86,8 +87,8 @@ func AssumeRoleWithInstance(account AccountInfo) (*session.Session, error) {
 	svc := sts.New(sess)
 
 	params := &sts.AssumeRoleInput{
-		RoleArn:         aws.String(account.Arn),       // Required
-		RoleSessionName: aws.String(""), // Required
+		RoleArn:         aws.String(account.Arn), // Required
+		RoleSessionName: aws.String(""),          // Required
 		DurationSeconds: aws.Int64(900),
 	}
 	if account.ExternalId != "" {
@@ -115,5 +116,5 @@ func AssumeRoleWithInstance(account AccountInfo) (*session.Session, error) {
 
 //This is a helper func to load the ~/.aws/config file
 func LoadConfigFile() {
-	os.Setenv("AWS_SDK_LOAD_CONFIG", string(1))
+	os.Setenv("AWS_SDK_LOAD_CONFIG", strconv.Itoa(1))
 }

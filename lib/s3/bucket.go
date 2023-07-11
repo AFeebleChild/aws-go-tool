@@ -194,7 +194,7 @@ func WriteProfilesBuckets(profileBuckets ProfilesBuckets) error {
 	outputFile := outputDir + "buckets.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create buckets file", err)
+		return fmt.Errorf("could not create buckets file: %v", err)
 	}
 
 	writer := csv.NewWriter(outfile)

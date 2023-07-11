@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -124,7 +125,7 @@ func WriteProfilesPolicies(profilesPolicies ProfilesPolicies) error {
 	outputFile := outputDir + "policies.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create policies file", err)
+		return fmt.Errorf("could not create policies file: %v", err)
 	}
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()
@@ -174,7 +175,7 @@ func WriteProfilesPolicies(profilesPolicies ProfilesPolicies) error {
 				policyName,
 				description,
 				createDate,
-				string(*profilePolicies.PolicyDetails[x].AttachmentCount),
+				strconv.Itoa(int(*profilePolicies.PolicyDetails[x].AttachmentCount)),
 			}
 
 			err = writer.Write(data)

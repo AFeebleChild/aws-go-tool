@@ -46,7 +46,7 @@ func GetRegionSnapshots(sess *session.Session) ([]ec2.Snapshot, error) {
 	for x {
 		resp, err := svc.DescribeSnapshots(params)
 		if err != nil {
-			return nil, fmt.Errorf("could not get snapshots", err)
+			return nil, fmt.Errorf("could not get snapshots: %v", err)
 		}
 		for _, snapshot := range resp.Snapshots {
 			snapshots = append(snapshots, *snapshot)
@@ -152,7 +152,7 @@ func WriteProfilesSnapshots(profileSnapshots ProfilesSnapshots, options utils.Ec
 	outputFile := outputDir + "snapshots.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create snapshots file", err)
+		return fmt.Errorf("could not create snapshots file: %v", err)
 	}
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()

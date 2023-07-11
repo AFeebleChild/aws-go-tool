@@ -133,7 +133,7 @@ func WriteProfilesVpcs(profileVpcs ProfilesVpcs) error {
 	outputFile := outputDir + "vpcs.csv"
 	outfile, err := utils.CreateFile(outputFile)
 	if err != nil {
-		return fmt.Errorf("could not create vpcs file", err)
+		return fmt.Errorf("could not create vpcs file: %v", err)
 	}
 
 	writer := csv.NewWriter(outfile)
