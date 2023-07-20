@@ -15,15 +15,16 @@ import (
 )
 
 type RegionVolumes struct {
-	Region  string
-	Profile string
-	Volumes []ec2.Volume
+	AccountId string
+	Region    string
+	Profile   string
+	Volumes   []ec2.Volume
 }
 
 type AccountVolumes []RegionVolumes
 type ProfilesVolumes []AccountVolumes
 
-//GetRegionVolumes will take a session and get all volumes based on the region of the session
+// GetRegionVolumes will take a session and get all volumes based on the region of the session
 func GetRegionVolumes(sess *session.Session) ([]ec2.Volume, error) {
 	var volumes []ec2.Volume
 	params := &ec2.DescribeVolumesInput{
@@ -43,7 +44,7 @@ func GetRegionVolumes(sess *session.Session) ([]ec2.Volume, error) {
 	return volumes, nil
 }
 
-//GetAccountVolumes will take a profile and go through all regions to get all volumes in the account
+// GetAccountVolumes will take a profile and go through all regions to get all volumes in the account
 func GetAccountVolumes(account utils.AccountInfo) (AccountVolumes, error) {
 	profile := account.Profile
 	fmt.Println("Getting volumes for profile:", profile)
@@ -53,11 +54,9 @@ func GetAccountVolumes(account utils.AccountInfo) (AccountVolumes, error) {
 	for _, region := range utils.RegionMap {
 		wg.Add(1)
 		go func(region string) {
-			var info RegionVolumes
-			var err error
+			info := RegionVolumes{AccountId: account.AccountId, Profile: profile, Region: region}
 			defer wg.Done()
-			account.Region = region
-			sess, err := account.GetSession()
+			sess, err := account.GetSession(region)
 			if err != nil {
 				log.Println("Could not get volumes for", account.Profile, ":", err)
 				return
@@ -67,12 +66,6 @@ func GetAccountVolumes(account utils.AccountInfo) (AccountVolumes, error) {
 				log.Println("Could not get volumes for", account.Profile, ":", err)
 				return
 			}
-			info.Volumes, err = GetRegionVolumes(sess)
-			if err != nil {
-				log.Println("Could not get volumes for", account.Profile, ":", err)
-			}
-			info.Region = region
-			info.Profile = profile
 			volumesChan <- info
 		}(region)
 	}
@@ -90,17 +83,19 @@ func GetAccountVolumes(account utils.AccountInfo) (AccountVolumes, error) {
 	return accountVolumes, nil
 }
 
-//GetProfilesVolumes will return all the volumes in all accounts of a given filename with a list of profiles in it
+// GetProfilesVolumes will return all the volumes in all accounts of a given filename with a list of profiles in it
 func GetProfilesVolumes(accounts []utils.AccountInfo) (ProfilesVolumes, error) {
 	profilesVolumesChan := make(chan AccountVolumes)
 	var wg sync.WaitGroup
 
-	//TODO need to add proper error handling for the go func
 	for _, account := range accounts {
 		wg.Add(1)
 		go func(account utils.AccountInfo) {
-			var err error
 			defer wg.Done()
+			if err := account.SetAccountId(); err != nil {
+				log.Println("could not set account id for", account.Profile, ":", err)
+				return
+			}
 			accountVolumes, err := GetAccountVolumes(account)
 			if err != nil {
 				return
@@ -133,7 +128,8 @@ func WriteProfilesVolumes(profileVolumes ProfilesVolumes, options utils.Ec2Optio
 	defer writer.Flush()
 	fmt.Println("Writing volumes to file:", outfile.Name())
 	var columnTitles = []string{
-		"Account",
+		"Account ID",
+		"Profile",
 		"Region",
 		"Volume Name",
 		"Volume ID",
@@ -194,6 +190,7 @@ func WriteProfilesVolumes(profileVolumes ProfilesVolumes, options utils.Ec2Optio
 				createDate := splitDate[0]
 
 				var data = []string{
+					regionVolumes.AccountId,
 					regionVolumes.Profile,
 					regionVolumes.Region,
 					volumeName,

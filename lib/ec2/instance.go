@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
@@ -27,47 +26,56 @@ type RegionInstances struct {
 type AccountInstances []RegionInstances
 type ProfilesInstances []AccountInstances
 
-//GetRegionInstances will take a session and pull all instances based on the region of the session
-func GetRegionInstances(sess *session.Session) ([]ec2.Instance, error) {
-	var instances []ec2.Instance
-	params := &ec2.DescribeInstancesInput{
-		DryRun: aws.Bool(false),
-	}
+// GetRegionInstances will take a session and pull all instances based on the region of the session
+func (ri *RegionInstances) GetRegionInstances(sess *session.Session) error {
+	svc := ec2.New(sess)
+	params := &ec2.DescribeInstancesInput{}
 
-	resp, err := ec2.New(sess).DescribeInstances(params)
-	if err != nil {
-		return nil, err
-	}
+	for {
+		resp, err := svc.DescribeInstances(params)
+		if err != nil {
+			return err
+		}
 
-	//Extract the instances from the reservations
-	for _, reservation := range resp.Reservations {
-		for _, instance := range reservation.Instances {
-			instances = append(instances, *instance)
+		for _, reservation := range resp.Reservations {
+			for _, instance := range reservation.Instances {
+				ri.Instances = append(ri.Instances, *instance)
+			}
+		}
+
+		if resp.NextToken != nil {
+			params.NextToken = resp.NextToken
+		} else {
+			break
+		}
+	}
+	return nil
+}
+
+func (ri *RegionInstances) GetRegionInstancesStatuses(sess *session.Session) error {
+	params := &ec2.DescribeInstanceStatusInput{}
+
+	for {
+		resp, err := ec2.New(sess).DescribeInstanceStatus(params)
+		if err != nil {
+			return err
+		}
+
+		for _, status := range resp.InstanceStatuses {
+			ri.Status = append(ri.Status, *status)
+		}
+
+		if resp.NextToken != nil {
+			params.NextToken = resp.NextToken
+		} else {
+			break
 		}
 	}
 
-	return instances, nil
+	return nil
 }
 
-func GetRegionInstancesStatuses(sess *session.Session) ([]ec2.InstanceStatus, error) {
-	var instanceStatuses []ec2.InstanceStatus
-	params := &ec2.DescribeInstanceStatusInput{
-		DryRun: aws.Bool(false),
-	}
-
-	resp, err := ec2.New(sess).DescribeInstanceStatus(params)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, status := range resp.InstanceStatuses {
-		instanceStatuses = append(instanceStatuses, *status)
-	}
-
-	return instanceStatuses, nil
-}
-
-//GetAccountInstances will take a profile and go through all regions to get all instances in the account
+// GetAccountInstances will take a profile and go through all regions to get all instances in the account
 func GetAccountInstances(account utils.AccountInfo) (AccountInstances, error) {
 	profile := account.Profile
 	fmt.Println("Getting instances for profile:", profile)
@@ -77,29 +85,22 @@ func GetAccountInstances(account utils.AccountInfo) (AccountInstances, error) {
 	for _, region := range utils.RegionMap {
 		wg.Add(1)
 		go func(region string) {
-			var info RegionInstances
-			var err error
 			defer wg.Done()
-			account.Region = region
-			sess, err := account.GetSession()
+			info := &RegionInstances{AccountId: account.AccountId, Region: region, Profile: profile}
+			sess, err := account.GetSession(region)
 			if err != nil {
 				log.Println("could not get session for", account.Profile, ":", err)
 				return
 			}
-			info.Instances, err = GetRegionInstances(sess)
-			info.Status, err = GetRegionInstancesStatuses(sess)
-			if err != nil {
+			if err = info.GetRegionInstances(sess); err != nil {
 				log.Println("could not get instances for", region, "in", profile, ":", err)
 				return
 			}
-			info.AccountId, err = utils.GetAccountId(sess)
-			if err != nil {
-				log.Println("could not get account id for profile: ", profile)
+			if err = info.GetRegionInstancesStatuses(sess); err != nil {
+				log.Println("could not get instance statuses for", region, "in", profile, ":", err)
 				return
 			}
-			info.Region = region
-			info.Profile = profile
-			instancesChan <- info
+			instancesChan <- *info
 		}(region)
 	}
 
@@ -116,7 +117,7 @@ func GetAccountInstances(account utils.AccountInfo) (AccountInstances, error) {
 	return accountInstances, nil
 }
 
-//GetProfilesInstances will return all the instances in all accounts of a given filename with a list of profiles in it
+// GetProfilesInstances will return all the instances in all accounts of a given filename with a list of profiles in it
 func GetProfilesInstances(accounts []utils.AccountInfo) (ProfilesInstances, error) {
 	profilesInstancesChan := make(chan AccountInstances)
 	var wg sync.WaitGroup
@@ -124,8 +125,11 @@ func GetProfilesInstances(accounts []utils.AccountInfo) (ProfilesInstances, erro
 	for _, account := range accounts {
 		wg.Add(1)
 		go func(account utils.AccountInfo) {
-			var err error
 			defer wg.Done()
+			if err := account.SetAccountId(); err != nil {
+				log.Println("could not set account id for", account.Profile, ":", err)
+				return
+			}
 			accountInstances, err := GetAccountInstances(account)
 			if err != nil {
 				log.Println("Could not get instances for", account.Profile, ":", err)
@@ -156,9 +160,9 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 		return fmt.Errorf("could not create instances file: %v", err)
 	}
 
+	fmt.Println("Writing instances to file:", outfile.Name())
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()
-	fmt.Println("Writing instances to file:", outfile.Name())
 	var columnTitles = []string{"Profile",
 		"Account ID",
 		"Region",
@@ -180,12 +184,10 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 		}
 	}
 
-	err = writer.Write(columnTitles)
-	if err != nil {
+	if err = writer.Write(columnTitles); err != nil {
 		fmt.Println(err)
 	}
-	//var pemKeys []string
-	//pemKeyFile, _ := utils.CreateFile("pemKeys.csv")
+
 	for _, accountInstances := range profileInstances {
 		for _, regionInstances := range accountInstances {
 			for _, instance := range regionInstances.Instances {
@@ -248,8 +250,7 @@ func WriteProfilesInstances(profileInstances ProfilesInstances, options utils.Ec
 					}
 				}
 
-				err = writer.Write(data)
-				if err != nil {
+				if err = writer.Write(data); err != nil {
 					fmt.Println(err)
 				}
 			}

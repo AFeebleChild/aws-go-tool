@@ -27,43 +27,33 @@ type RegionSnapshots struct {
 type AccountSnapshots []RegionSnapshots
 type ProfilesSnapshots []AccountSnapshots
 
-//GetRegionSnapshots will take a session and get all snapshots based on the region of the session
-func GetRegionSnapshots(sess *session.Session) ([]ec2.Snapshot, error) {
+// GetRegionSnapshots will take a session and get all snapshots based on the region of the session
+func (rs *RegionSnapshots) GetRegionSnapshots(sess *session.Session, accountId string) error {
 	svc := ec2.New(sess)
-	var snapshots []ec2.Snapshot
-	accountID, err := utils.GetAccountId(sess)
-	if err != nil {
-		return nil, err
-	}
-	owners := []string{accountID}
 	params := &ec2.DescribeSnapshotsInput{
-		DryRun:   aws.Bool(false),
-		OwnerIds: aws.StringSlice(owners),
+		OwnerIds: aws.StringSlice([]string{accountId}),
 	}
 
-	//x is the check to ensure there is no snapshots in the "NextToken" response parameter
-	x := true
-	for x {
+	for {
 		resp, err := svc.DescribeSnapshots(params)
 		if err != nil {
-			return nil, fmt.Errorf("could not get snapshots: %v", err)
+			return err
 		}
 		for _, snapshot := range resp.Snapshots {
-			snapshots = append(snapshots, *snapshot)
+			rs.Snapshots = append(rs.Snapshots, *snapshot)
 		}
-		//If it is truncated, add the marker to the params for the next loop
-		//If not, set x to false to exit for loop
+
 		if resp.NextToken != nil {
 			params.NextToken = resp.NextToken
 		} else {
-			x = false
+			break
 		}
 	}
 
-	return snapshots, nil
+	return nil
 }
 
-//GetAccountSnapshots will take a profile and go through all regions to get all snapshots in the account
+// GetAccountSnapshots will take a profile and go through all regions to get all snapshots in the account
 func GetAccountSnapshots(account utils.AccountInfo) (AccountSnapshots, error) {
 	profile := account.Profile
 	fmt.Println("Getting snapshots for profile:", profile)
@@ -73,17 +63,14 @@ func GetAccountSnapshots(account utils.AccountInfo) (AccountSnapshots, error) {
 	for _, region := range utils.RegionMap {
 		wg.Add(1)
 		go func(region string) {
-			var info RegionSnapshots
-			var err error
 			defer wg.Done()
-			account.Region = region
-			sess, err := account.GetSession()
+			info := RegionSnapshots{AccountId: account.AccountId, Region: region, Profile: profile}
+			sess, err := account.GetSession(region)
 			if err != nil {
 				log.Println("Could not get snapshots for", account.Profile, ":", err)
 				return
 			}
-			info.Snapshots, err = GetRegionSnapshots(sess)
-			if err != nil {
+			if err = info.GetRegionSnapshots(sess, info.AccountId); err != nil {
 				log.Println("Could not get snapshots for", account.Profile, ":", err)
 				return
 			}
@@ -91,13 +78,6 @@ func GetAccountSnapshots(account utils.AccountInfo) (AccountSnapshots, error) {
 			if err != nil {
 				log.Println("Could not get volumes for", account.Profile, ":", err)
 			}
-			accountId, err := utils.GetAccountId(sess)
-			if err != nil {
-				log.Println("could not get account id for", account.Profile, ":", err)
-			}
-			info.Profile = profile
-			info.AccountId = accountId
-			info.Region = region
 			snapshotsChan <- info
 		}(region)
 	}
@@ -115,17 +95,19 @@ func GetAccountSnapshots(account utils.AccountInfo) (AccountSnapshots, error) {
 	return accountSnapshots, nil
 }
 
-//GetProfilesSnapshots will return all the snapshots in all accounts of a given filename with a list of profiles in it
+// GetProfilesSnapshots will return all the snapshots in all accounts of a given filename with a list of profiles in it
 func GetProfilesSnapshots(accounts []utils.AccountInfo) (ProfilesSnapshots, error) {
 	profilesSnapshotsChan := make(chan AccountSnapshots)
 	var wg sync.WaitGroup
 
-	//TODO need to add proper error handling for the go func
 	for _, account := range accounts {
 		wg.Add(1)
 		go func(account utils.AccountInfo) {
-			var err error
 			defer wg.Done()
+			if err := account.SetAccountId(); err != nil {
+				log.Println("could not set account id for", account.Profile, ":", err)
+				return
+			}
 			accountSnapshots, err := GetAccountSnapshots(account)
 			if err != nil {
 				return

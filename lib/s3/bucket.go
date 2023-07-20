@@ -24,7 +24,7 @@ type BucketInfo struct {
 type AccountBuckets []BucketInfo
 type ProfilesBuckets []AccountBuckets
 
-//Will return true if the bucket is public
+// Will return true if the bucket is public
 func CheckPublicBucket(bucketName string, sess *session.Session) (bool, error) {
 	params := &s3.GetBucketAclInput{
 		Bucket: aws.String(bucketName),
@@ -77,11 +77,11 @@ func GetProfilesBuckets(accounts []utils.AccountInfo) (ProfilesBuckets, error) {
 	return profilesBuckets, nil
 }
 
-//name is an optional parameter for searching the buckets for a name
+// name is an optional parameter for searching the buckets for a name
 func GetProfileBuckets(account utils.AccountInfo, name string) ([]BucketInfo, error) {
 	profile := account.Profile
 	fmt.Println("Getting buckets for profile:", profile)
-	sess, err := account.GetSession()
+	sess, err := account.GetSession("us-east-1")
 	if err != nil {
 		return nil, err
 	}
@@ -106,11 +106,8 @@ func GetProfileBuckets(account utils.AccountInfo, name string) ([]BucketInfo, er
 			utils.LogAll("could not get region for", bucketName, "in", profile, ":", err)
 		}
 		encryptionSess := sess
-		//Region matters for getting the encryption information, so just create a temp account in order to set the proper region and get a new session
 		if bucket.Region != "us-east-1" {
-			tempAccount := account
-			tempAccount.Region = bucket.Region
-			encryptionSess, err = tempAccount.GetSession()
+			encryptionSess, err = account.GetSession(bucket.Region)
 			//TODO determine a good fail condition here
 			if err != nil {
 
@@ -126,8 +123,8 @@ func GetProfileBuckets(account utils.AccountInfo, name string) ([]BucketInfo, er
 	return buckets, nil
 }
 
-//GetAllBucketNames will return all of the bucket names for the listed account
-//Can filter down the names with the "name" parameter if desired
+// GetAllBucketNames will return all of the bucket names for the listed account
+// Can filter down the names with the "name" parameter if desired
 func GetBucketNames(sess *session.Session, name string) ([]string, error) {
 	params := &s3.ListBucketsInput{}
 
@@ -152,8 +149,8 @@ func GetBucketNames(sess *session.Session, name string) ([]string, error) {
 	return names, nil
 }
 
-//GetBucketEncryption will return the encryption type, if enabled, for the specified bucket
-//There should only ever be one encrypt type applied, even though the rules is a slice
+// GetBucketEncryption will return the encryption type, if enabled, for the specified bucket
+// There should only ever be one encrypt type applied, even though the rules is a slice
 func GetBucketEncryption(sess *session.Session, name string) (string, error) {
 	params := &s3.GetBucketEncryptionInput{
 		Bucket: aws.String(name),

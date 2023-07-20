@@ -67,8 +67,7 @@ func GetAccountSubnets(account utils.AccountInfo) (AccountSubnets, error) {
 			defer wg.Done()
 
 			var err error
-			account.Region = region
-			sess, err := account.GetSession()
+			sess, err := account.GetSession(region)
 			if err != nil {
 				log.Println("Could not get session for", account.Profile, ":", err)
 				return

@@ -35,7 +35,7 @@ func CreateRole(params *iam.CreateRoleInput, sess *session.Session) (*iam.Create
 	return resp, nil
 }
 
-//GetProfileRoles will get all the roles for a given profile session
+// GetProfileRoles will get all the roles for a given profile session
 func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 	svc := iam.New(sess)
 	params := &iam.ListRolesInput{
@@ -43,9 +43,7 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 	}
 
 	var roles []iam.Role
-	//x is the check to ensure there is no roles left from the IsTruncated
-	x := true
-	for x {
+	for {
 		resp, err := svc.ListRoles(params)
 		if err != nil {
 			return nil, fmt.Errorf("could not get roles: %v", err)
@@ -53,12 +51,11 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 		for _, role := range resp.Roles {
 			roles = append(roles, *role)
 		}
-		//If it is truncated, add the marker to the params for the next loop
-		//If not, set x to false to exit for loop
+
 		if *resp.IsTruncated {
 			params.Marker = resp.Marker
 		} else {
-			x = false
+			break
 		}
 	}
 
@@ -69,8 +66,7 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 		}
 
 		var tempInfo RoleInfo
-		x := true
-		for x {
+		for {
 			resp, err := svc.ListRolePolicies(inlineParams)
 			if err != nil {
 				return nil, fmt.Errorf("could not get inline role policies: %v", err)
@@ -83,15 +79,14 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 			if *resp.IsTruncated {
 				params.Marker = resp.Marker
 			} else {
-				x = false
+				break
 			}
 		}
 
 		attachedParams := &iam.ListAttachedRolePoliciesInput{
 			RoleName: aws.String(*role.RoleName),
 		}
-		x = true
-		for x {
+		for {
 			resp, err := svc.ListAttachedRolePolicies(attachedParams)
 			if err != nil {
 				return nil, fmt.Errorf("could not get inline role policies: %v", err)
@@ -104,7 +99,7 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 			if *resp.IsTruncated {
 				params.Marker = resp.Marker
 			} else {
-				x = false
+				break
 			}
 		}
 		info = append(info, tempInfo)
@@ -113,7 +108,7 @@ func GetProfileRoles(sess *session.Session) ([]RoleInfo, error) {
 	return info, nil
 }
 
-//GetProfilesRoles will get all of the roles in all given accounts
+// GetProfilesRoles will get all of the roles in all given accounts
 func GetProfilesRoles(accounts []utils.AccountInfo) (ProfilesRoles, error) {
 	profilesRolesChan := make(chan ProfileRoles)
 	var wg sync.WaitGroup
@@ -125,7 +120,7 @@ func GetProfilesRoles(accounts []utils.AccountInfo) (ProfilesRoles, error) {
 			fmt.Println("Getting roles for profile:", account.Profile)
 			var profileRoles ProfileRoles
 			profileRoles.Profile = account.Profile
-			sess, err := account.GetSession()
+			sess, err := account.GetSession("us-east-1")
 			if err != nil {
 				log.Println("could not open session for ", account.Profile, " : ", err)
 				return
@@ -162,8 +157,8 @@ func GetProfilesRoles(accounts []utils.AccountInfo) (ProfilesRoles, error) {
 //	params := &iam.getpolicy
 //}
 
-//UpdateProfilesRoles will take a filename which should be the output of the GetProfilesRoles func
-//The duration parameter is the new MaxSessDuration in seconds
+// UpdateProfilesRoles will take a filename which should be the output of the GetProfilesRoles func
+// The duration parameter is the new MaxSessDuration in seconds
 func UpdateProfilesRolesSessionDuration(filename string, duration int64) error {
 	//TODO Update to use csv reader
 	lines, err := utils.ReadFile(filename)

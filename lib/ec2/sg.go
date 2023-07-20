@@ -8,82 +8,67 @@ import (
 	"sync"
 
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
-type SGOptions struct {
+type SgOptions struct {
 	Cidr string
 	Tags []string
 }
 
-type RegionSGs struct {
-	Region    string
-	Profile   string
-	AccountID string
-	SGs       []ec2.SecurityGroup
+type RegionSecurityGroups struct {
+	Region         string
+	Profile        string
+	AccountId      string
+	SecurityGroups []ec2.SecurityGroup
 }
 
-type AccountSGs []RegionSGs
-type ProfilesSGs []AccountSGs
+type AccountSecurityGroups []RegionSecurityGroups
+type ProfilesSecurityGroups []AccountSecurityGroups
 
-func GetRegionSGs(sess *session.Session) ([]ec2.SecurityGroup, error) {
-	params := &ec2.DescribeSecurityGroupsInput{
-		DryRun: aws.Bool(false),
-	}
+func (rs *RegionSecurityGroups) GetRegionSecurityGroups(sess *session.Session) error {
+	svc := ec2.New(sess)
+	params := &ec2.DescribeSecurityGroupsInput{}
 
-	var SGs []ec2.SecurityGroup
-	//x is the check to ensure there is no roles left from the IsTruncated
-	x := true
-	for x {
-		resp, err := ec2.New(sess).DescribeSecurityGroups(params)
+	for {
+		resp, err := svc.DescribeSecurityGroups(params)
 		if err != nil {
-			return nil, err
+			return err
 		}
+
 		for _, SG := range resp.SecurityGroups {
-			SGs = append(SGs, *SG)
+			rs.SecurityGroups = append(rs.SecurityGroups, *SG)
 		}
-		//If it is truncated, add the marker to the params for the next loop
-		//If not, set x to false to exit for loop
+
 		if resp.NextToken != nil {
 			params.NextToken = resp.NextToken
 		} else {
-			x = false
+			break
 		}
 	}
 
-	return SGs, nil
+	return nil
 }
 
-func GetAccountSGs(account utils.AccountInfo) (AccountSGs, error) {
+func GetAccountSecurityGroups(account utils.AccountInfo) (AccountSecurityGroups, error) {
 	profile := account.Profile
 	fmt.Println("Getting Security Groups for profile:", profile)
-	SGsChan := make(chan RegionSGs)
+	SGsChan := make(chan RegionSecurityGroups)
 	var wg sync.WaitGroup
 
 	for _, region := range utils.RegionMap {
 		wg.Add(1)
 		go func(region string) {
-			var info RegionSGs
-			var err error
 			defer wg.Done()
-			account.Region = region
-			sess, err := account.GetSession()
+			info := RegionSecurityGroups{AccountId: account.AccountId, Region: region, Profile: profile}
+			sess, err := account.GetSession(region)
 			if err != nil {
 				log.Println("Could not get security groups for", account.Profile, ":", err)
 				return
 			}
-			info.SGs, err = GetRegionSGs(sess)
-			if err != nil {
+			if err = info.GetRegionSecurityGroups(sess); err != nil {
 				log.Println("Could not get security groups for", region, "in", profile, ":", err)
-				return
-			}
-			info.Region = region
-			info.Profile = profile
-			info.AccountID, err = utils.GetAccountId(sess)
-			if err != nil {
-				log.Println("Could not get account id for", account.Profile, ":", err)
 				return
 			}
 			SGsChan <- info
@@ -95,7 +80,7 @@ func GetAccountSGs(account utils.AccountInfo) (AccountSGs, error) {
 		close(SGsChan)
 	}()
 
-	var accountSGs AccountSGs
+	var accountSGs AccountSecurityGroups
 	for regionSGs := range SGsChan {
 		accountSGs = append(accountSGs, regionSGs)
 	}
@@ -103,16 +88,19 @@ func GetAccountSGs(account utils.AccountInfo) (AccountSGs, error) {
 	return accountSGs, nil
 }
 
-func GetProfilesSGs(accounts []utils.AccountInfo) (ProfilesSGs, error) {
-	profilesSGsChan := make(chan AccountSGs)
+func GetProfilesSGs(accounts []utils.AccountInfo) (ProfilesSecurityGroups, error) {
+	profilesSGsChan := make(chan AccountSecurityGroups)
 	var wg sync.WaitGroup
 
 	for _, account := range accounts {
 		wg.Add(1)
 		go func(account utils.AccountInfo) {
-			var err error
 			defer wg.Done()
-			accountSGs, err := GetAccountSGs(account)
+			if err := account.SetAccountId(); err != nil {
+				log.Println("could not set account id for", account.Profile, ":", err)
+				return
+			}
+			accountSGs, err := GetAccountSecurityGroups(account)
 			if err != nil {
 				log.Println("Could not get security groups for", account.Profile, ":", err)
 				return
@@ -126,23 +114,23 @@ func GetProfilesSGs(accounts []utils.AccountInfo) (ProfilesSGs, error) {
 		close(profilesSGsChan)
 	}()
 
-	var profilesSGs ProfilesSGs
+	var profilesSGs ProfilesSecurityGroups
 	for accountSGs := range profilesSGsChan {
 		profilesSGs = append(profilesSGs, accountSGs)
 	}
 	return profilesSGs, nil
 }
 
-func WriteProfilesSgs(profileSGs ProfilesSGs, options SGOptions) error {
+func WriteProfilesSgs(profileSGs ProfilesSecurityGroups, options SgOptions) error {
 	outputDir := "output/ec2/"
 	utils.MakeDir(outputDir)
 	outputFile := outputDir + "sgs.csv"
 	outfile, err := utils.CreateFile(outputFile)
-	fmt.Println("Writing SGs to file:", outfile.Name())
 	if err != nil {
 		return fmt.Errorf("could not create sgs file: %v", err)
 	}
 
+	fmt.Println("Writing SGs to file:", outfile.Name())
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()
 
@@ -160,16 +148,15 @@ func WriteProfilesSgs(profileSGs ProfilesSGs, options SGOptions) error {
 		}
 	}
 
-	err = writer.Write(columnTitles)
-	if err != nil {
+	if err = writer.Write(columnTitles); err != nil {
 		fmt.Println(err)
 	}
 
 	for _, accountSGs := range profileSGs {
 		for _, regionSGs := range accountSGs {
-			for _, SG := range regionSGs.SGs {
+			for _, SG := range regionSGs.SecurityGroups {
 				var data = []string{regionSGs.Profile,
-					regionSGs.AccountID,
+					regionSGs.AccountId,
 					regionSGs.Region,
 					*SG.GroupName,
 					*SG.GroupId,
@@ -190,8 +177,7 @@ func WriteProfilesSgs(profileSGs ProfilesSGs, options SGOptions) error {
 					}
 				}
 
-				err = writer.Write(data)
-				if err != nil {
+				if err = writer.Write(data); err != nil {
 					fmt.Println(err)
 				}
 			}
@@ -200,18 +186,18 @@ func WriteProfilesSgs(profileSGs ProfilesSGs, options SGOptions) error {
 	return nil
 }
 
-//if a cidr is given, search the SGs for that rule and only print those containing the cidr
-func WriteProfilesSgRules(profileSGs ProfilesSGs, options SGOptions) error {
+// if a cidr is given, search the SGs for that rule and only print those containing the cidr
+func WriteProfilesSgRules(profileSGs ProfilesSecurityGroups, options SgOptions) error {
 	outputDir := "output/ec2/"
 	utils.MakeDir(outputDir)
 	outputFile := outputDir + "sgRules.csv"
 	cidr := options.Cidr
 	outfile, err := utils.CreateFile(outputFile)
-	fmt.Println("Writing SG Rules to file:", outfile.Name())
 	if err != nil {
 		return fmt.Errorf("could not create sgRules file: %v", err)
 	}
 
+	fmt.Println("Writing SG Rules to file:", outfile.Name())
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()
 
@@ -233,21 +219,20 @@ func WriteProfilesSgRules(profileSGs ProfilesSGs, options SGOptions) error {
 		}
 	}
 
-	err = writer.Write(columnTitles)
-	if err != nil {
+	if err = writer.Write(columnTitles); err != nil {
 		fmt.Println(err)
 	}
 
 	for _, accountSGs := range profileSGs {
 		for _, regionSGs := range accountSGs {
-			for _, SG := range regionSGs.SGs {
+			for _, SG := range regionSGs.SecurityGroups {
 				//the cidr option has been passed so need to search for it
 				if cidr != "" {
 					for _, rule := range SG.IpPermissions {
 						for _, ip := range rule.IpRanges {
 							if *ip.CidrIp == cidr {
 								var data = []string{regionSGs.Profile,
-									regionSGs.AccountID,
+									regionSGs.AccountId,
 									regionSGs.Region,
 									*SG.GroupName,
 									*SG.GroupId,
@@ -291,7 +276,7 @@ func WriteProfilesSgRules(profileSGs ProfilesSGs, options SGOptions) error {
 						}
 						for _, ip := range rule.IpRanges {
 							var data = []string{regionSGs.Profile,
-								regionSGs.AccountID,
+								regionSGs.AccountId,
 								regionSGs.Region,
 								*SG.GroupName,
 								*SG.GroupId,
@@ -316,8 +301,7 @@ func WriteProfilesSgRules(profileSGs ProfilesSGs, options SGOptions) error {
 								}
 							}
 
-							err = writer.Write(data)
-							if err != nil {
+							if err = writer.Write(data); err != nil {
 								fmt.Println(err)
 							}
 						}

@@ -31,7 +31,7 @@ type (
 	}
 )
 
-//var ValidFileTypes = []string{"json", "yaml", "yml", "log", "tfstate", "csv"}
+// var ValidFileTypes = []string{"json", "yaml", "yml", "log", "tfstate", "csv"}
 var ValidFileTypes = []string{"7z", "abc", "accdb", "apk", "bat", "bin", "bz2", "bzip2", "c", "c#", "cab", "cc", "cer", "cpp", "csv", "cxx", "dbf", "dbx", "deb", "dmg", "doc", "docx", "dot", "dotx", "dwg", "dxf", "eml", "emlx", "exe", "gpg", "gz", "gzip", "html", "iwa", "jar", "java", "json", "key", "keynote", "lua", "mdb", "msg", "msi", "odp", "oos", "p12", "pages", "pdf", "perl", "pgp", "pl", "pot", "pps", "ppt", "pptx", "pst", "py", "rar", "rtf", "sdp", "sdw", "sldasm", "slddrw", "sldprt", "sql", "sxi", "sxw", "tar.gz", "tsv", "txt", "vdx", "vsd", "vss", "vst", "vsx", "vtw", "vtx", "xls", "xlsx", "xlw", "xml", "xps", "zip"}
 
 func GetBucketFileSize(bucket BucketInfo, sess *session.Session) (*BucketSizeInfo, error) {
@@ -102,12 +102,9 @@ func GetBucketFileSize(bucket BucketInfo, sess *session.Session) (*BucketSizeInf
 func GetProfileBucketsFileSize(buckets []BucketInfo, account utils.AccountInfo) ([]*BucketSizeInfo, error) {
 	getBucketsChan := make(chan *BucketSizeInfo)
 	var wg sync.WaitGroup
-	sess, err := account.GetSession()
-	if err != nil {
-		utils.LogAll("could not get sess for ", account.Profile, ":", err)
-	}
-	accountId, err := utils.GetAccountId(sess)
-	if err != nil {
+	var err error
+
+	if err = account.SetAccountId(); err != nil {
 		utils.LogAll("could not get account id for", account.Profile, ":", err)
 	}
 	for _, bucket := range buckets {
@@ -115,7 +112,7 @@ func GetProfileBucketsFileSize(buckets []BucketInfo, account utils.AccountInfo) 
 		go func(bucket BucketInfo) {
 			var err error
 			defer wg.Done()
-			sess, err := account.GetSession()
+			sess, err := account.GetSession("us-east-1")
 			if err != nil {
 				utils.LogAll("could not open session for", account.Profile, ":", err)
 				return
@@ -126,8 +123,7 @@ func GetProfileBucketsFileSize(buckets []BucketInfo, account utils.AccountInfo) 
 				utils.LogAll("could not get the region for", bucket.Name, "in account", account.Profile, ":", err)
 				return
 			}
-			account.Region = bucketRegion
-			sess, err = account.GetSession()
+			sess, err = account.GetSession(bucketRegion)
 			bucketSizeInfo, err := GetBucketFileSize(bucket, sess)
 			if err != nil {
 				utils.LogAll("could not get bucketinfo for", account.Profile, ":", err)
@@ -135,7 +131,7 @@ func GetProfileBucketsFileSize(buckets []BucketInfo, account utils.AccountInfo) 
 			}
 			bucketSizeInfo.BucketInfo.Region = bucketRegion
 			bucketSizeInfo.BucketInfo.Profile = account.Profile
-			bucketSizeInfo.BucketInfo.AccountId = accountId
+			bucketSizeInfo.BucketInfo.AccountId = account.AccountId
 
 			getBucketsChan <- bucketSizeInfo
 		}(bucket)
@@ -172,8 +168,7 @@ func GetProfilesPublicBucketsFileSize(accounts []utils.AccountInfo, bucketOption
 					return
 				}
 				for _, bucket := range buckets {
-					account.Region = bucket.Region
-					sess, err := account.GetSession()
+					sess, err := account.GetSession(bucket.Region)
 					public, err := CheckPublicBucket(bucket.Name, sess)
 					if err != nil {
 						utils.LogAll("could not check public bucket", bucket.Name, ":", err)

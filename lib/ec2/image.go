@@ -39,31 +39,34 @@ type (
 	ProfilesImages []AccountImages
 )
 
-//GetRegionImages will take a session and pull all amis based on the region of the session
-func GetRegionImages(sess *session.Session) ([]ec2.Image, error) {
-	var amis []ec2.Image
-	AccountID, err := utils.GetAccountId(sess)
-	if err != nil {
-		return amis, fmt.Errorf("could not get account id: %v", err)
-	}
+// GetRegionImages will take a session and pull all amis based on the region of the session
+func (ri *RegionImages) GetRegionImages(sess *session.Session, accountId string) error {
+	svc := ec2.New(sess)
 	params := &ec2.DescribeImagesInput{
-		DryRun: aws.Bool(false),
-		Owners: []*string{aws.String(AccountID)},
+		Owners: aws.StringSlice([]string{accountId}),
 	}
 
-	resp, err := ec2.New(sess).DescribeImages(params)
-	if err != nil {
-		return nil, err
+	for {
+		resp, err := svc.DescribeImages(params)
+		if err != nil {
+			return err
+		}
+
+		for _, image := range resp.Images {
+			ri.Images = append(ri.Images, *image)
+		}
+
+		if resp.NextToken != nil {
+			params.NextToken = resp.NextToken
+		} else {
+			break
+		}
 	}
 
-	for _, image := range resp.Images {
-		amis = append(amis, *image)
-	}
-
-	return amis, nil
+	return nil
 }
 
-//GetAccountImages will take a profile and go through all regions to get all amis in the account
+// GetAccountImages will take a profile and go through all regions to get all amis in the account
 func GetAccountImages(account utils.AccountInfo) (AccountImages, error) {
 	profile := account.Profile
 	fmt.Println("Getting images for profile:", profile)
@@ -73,28 +76,18 @@ func GetAccountImages(account utils.AccountInfo) (AccountImages, error) {
 	for _, region := range utils.RegionMap {
 		wg.Add(1)
 		go func(region string) {
-			var info RegionImages
-			var err error
 			defer wg.Done()
-			account.Region = region
-			sess, err := account.GetSession()
+			info := &RegionImages{AccountId: account.AccountId, Region: region, Profile: profile}
+			sess, err := account.GetSession(region)
 			if err != nil {
-				log.Println("Could not get users for", account.Profile, ":", err)
+				log.Println("Could not get session for", account.Profile, ":", err)
 				return
 			}
-			info.Images, err = GetRegionImages(sess)
-			if err != nil {
+			if err = info.GetRegionImages(sess, account.AccountId); err != nil {
 				log.Println("Could not get images for", region, "in", profile, ":", err)
 				return
 			}
-			info.AccountId, err = utils.GetAccountId(sess)
-			if err != nil {
-				log.Println("Could not get account id for", account.Profile, ":", err)
-				return
-			}
-			info.Region = region
-			info.Profile = profile
-			imagesChan <- info
+			imagesChan <- *info
 		}(region)
 	}
 
@@ -111,7 +104,7 @@ func GetAccountImages(account utils.AccountInfo) (AccountImages, error) {
 	return accountImages, nil
 }
 
-//GetProfilesImages will return all the images in all accounts of a given filename with a list of profiles in it
+// GetProfilesImages will return all the images in all accounts of a given filename with a list of profiles in it
 func GetProfilesImages(accounts []utils.AccountInfo) (ProfilesImages, error) {
 	profilesImagesChan := make(chan AccountImages)
 	var wg sync.WaitGroup
@@ -119,8 +112,11 @@ func GetProfilesImages(accounts []utils.AccountInfo) (ProfilesImages, error) {
 	for _, account := range accounts {
 		wg.Add(1)
 		go func(account utils.AccountInfo) {
-			var err error
 			defer wg.Done()
+			if err := account.SetAccountId(); err != nil {
+				log.Println("could not set account id for", account.Profile, ":", err)
+				return
+			}
 			accountImages, err := GetAccountImages(account)
 			if err != nil {
 				log.Println("Could not get images for", account.Profile, ":", err)
@@ -151,9 +147,9 @@ func WriteProfilesImages(profileImages ProfilesImages, options utils.Ec2Options)
 		return fmt.Errorf("could not create images file: %v", err)
 	}
 
+	fmt.Println("Writing images to file:", outfile.Name())
 	writer := csv.NewWriter(outfile)
 	defer writer.Flush()
-	fmt.Println("Writing images to file:", outfile.Name())
 
 	var columnTitles = []string{"Profile",
 		"Account ID",
@@ -171,8 +167,7 @@ func WriteProfilesImages(profileImages ProfilesImages, options utils.Ec2Options)
 		}
 	}
 
-	err = writer.Write(columnTitles)
-	if err != nil {
+	if err = writer.Write(columnTitles); err != nil {
 		fmt.Println(err)
 	}
 	for _, accountImages := range profileImages {
@@ -217,8 +212,7 @@ func WriteProfilesImages(profileImages ProfilesImages, options utils.Ec2Options)
 					}
 				}
 
-				err = writer.Write(data)
-				if err != nil {
+				if err = writer.Write(data); err != nil {
 					fmt.Println(err)
 				}
 			}
@@ -311,8 +305,7 @@ func WriteCheckedImages(checkedImages []ImageInfo, options utils.Ec2Options) err
 		}
 	}
 
-	err = writer.Write(columnTitles)
-	if err != nil {
+	if err = writer.Write(columnTitles); err != nil {
 		fmt.Println(err)
 	}
 	for _, checkedImage := range checkedImages {
@@ -358,8 +351,7 @@ func WriteCheckedImages(checkedImages []ImageInfo, options utils.Ec2Options) err
 			}
 		}
 
-		err = writer.Write(data)
-		if err != nil {
+		if err = writer.Write(data); err != nil {
 			fmt.Println(err)
 		}
 	}

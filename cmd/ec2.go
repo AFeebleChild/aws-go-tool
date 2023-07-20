@@ -85,7 +85,7 @@ var sgsListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		options := ec2.SGOptions{Tags: Tags}
+		options := ec2.SgOptions{Tags: Tags}
 		err = ec2.WriteProfilesSgs(profilesSGs, options)
 		if err != nil {
 			fmt.Println(err)
@@ -103,7 +103,7 @@ var sgsRulesListCmd = &cobra.Command{
 			fmt.Println(err)
 			return
 		}
-		options := ec2.SGOptions{Tags: Tags}
+		options := ec2.SgOptions{Tags: Tags}
 		options.Cidr = Cidr
 		err = ec2.WriteProfilesSgRules(profilesSGs, options)
 		if err != nil {

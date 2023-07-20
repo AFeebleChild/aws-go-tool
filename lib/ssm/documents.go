@@ -2,6 +2,7 @@ package ssm
 
 import (
 	"fmt"
+
 	"github.com/afeeblechild/aws-go-tool/lib/utils"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -21,9 +22,9 @@ func RemoveDocumentPermissionsFromAccounts(accounts []utils.AccountInfo, account
 	}
 
 	for _, account := range accounts {
-		sess, err := account.GetSession()
+		sess, err := account.GetSession("us-east-1")
 		if err != nil {
-			utils.LogAll("could not get session for "+account.AccountID+":", err)
+			utils.LogAll("could not get session for "+account.AccountId+":", err)
 			continue
 		}
 		RemoveDocumentPermissions(sess, pointerAccountIds, documentName)

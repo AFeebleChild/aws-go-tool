@@ -23,7 +23,7 @@ type RegionVpcs struct {
 type AccountVpcs []RegionVpcs
 type ProfilesVpcs []AccountVpcs
 
-//GetRegionVpcs will take a session and pull all vpcs and subnets based on the region of the session
+// GetRegionVpcs will take a session and pull all vpcs and subnets based on the region of the session
 func GetRegionVpcs(sess *session.Session, arn string) (*RegionVpcs, error) {
 	svc := ec2.New(sess)
 	var vpcs RegionVpcs
@@ -47,7 +47,7 @@ func GetRegionVpcs(sess *session.Session, arn string) (*RegionVpcs, error) {
 	return &vpcs, nil
 }
 
-//GetAccountVpcs will take a profile and go through all regions to get all instances in the account
+// GetAccountVpcs will take a profile and go through all regions to get all instances in the account
 func GetAccountVpcs(account utils.AccountInfo) (AccountVpcs, error) {
 	profile := account.Profile
 	fmt.Println("Getting vpc info for profile:", profile)
@@ -60,8 +60,7 @@ func GetAccountVpcs(account utils.AccountInfo) (AccountVpcs, error) {
 			defer wg.Done()
 
 			var err error
-			account.Region = region
-			sess, err := account.GetSession()
+			sess, err := account.GetSession(region)
 			if err != nil {
 				log.Println("Could not get session for", account.Profile, ":", err)
 				return
@@ -95,7 +94,7 @@ func GetAccountVpcs(account utils.AccountInfo) (AccountVpcs, error) {
 	return accountVpcs, nil
 }
 
-//GetProfilesVpcs will return all the vpcs/subnets in all accounts of a given filename with a list of profiles in it
+// GetProfilesVpcs will return all the vpcs/subnets in all accounts of a given filename with a list of profiles in it
 func GetProfilesVpcs(accounts []utils.AccountInfo) (ProfilesVpcs, error) {
 	profilesVpcsChan := make(chan AccountVpcs)
 	var wg sync.WaitGroup

@@ -17,7 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/iam"
 )
 
-//two structs to help with printing the policy documents
+// two structs to help with printing the policy documents
 type Document struct {
 	Version   string      `json:"Version"`
 	Statement []Statement `json:"Statement"`
@@ -30,8 +30,9 @@ type Statement struct {
 	Sid      string   `json:"Sid"`
 }
 
-//The Policies and PolicyVersion need to have the same index to match up for later reference
+// The Policies and PolicyVersion need to have the same index to match up for later reference
 type ProfilePolicies struct {
+	AccountId string
 	Profile        string
 	PolicyDetails  []iam.ManagedPolicyDetail
 	PolicyVersions []iam.PolicyVersion
@@ -47,8 +48,7 @@ func GetProfilePolicies(sess *session.Session) (ProfilePolicies, error) {
 		Filter: aws.StringSlice([]string{"LocalManagedPolicy"}),
 	}
 
-	x := true
-	for x {
+	for {
 		resp, err := svc.GetAccountAuthorizationDetails(detailsParams)
 		if err != nil {
 			return ProfilePolicies{}, err
@@ -57,9 +57,8 @@ func GetProfilePolicies(sess *session.Session) (ProfilePolicies, error) {
 			policies.PolicyDetails = append(policies.PolicyDetails, *policy)
 		}
 
-		//If the response is not truncated, exit loop. Otherwise, set the params marker to the response marker
 		if !*resp.IsTruncated {
-			x = false
+			break
 		} else {
 			detailsParams.Marker = resp.Marker
 		}
@@ -90,7 +89,7 @@ func GetProfilesPolicies(accounts []utils.AccountInfo) (ProfilesPolicies, error)
 		go func(account utils.AccountInfo) {
 			defer wg.Done()
 			fmt.Println("Getting policies for profile:", account.Profile)
-			sess, err := account.GetSession()
+			sess, err := account.GetSession("us-east-1")
 			if err != nil {
 				log.Println("could not open session for ", account.Profile, " : ", err)
 				return

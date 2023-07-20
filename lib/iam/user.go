@@ -45,7 +45,7 @@ func UpdateUserPassword(user UserUpdate, sess *session.Session) (string, error) 
 	return password, nil
 }
 
-//GetProfileUsers will get all the users for a given profile session
+// GetProfileUsers will get all the users for a given profile session
 func GetProfileUsers(sess *session.Session) ([]iam.User, error) {
 	svc := iam.New(sess)
 	var users []iam.User
@@ -53,9 +53,7 @@ func GetProfileUsers(sess *session.Session) ([]iam.User, error) {
 		MaxItems: aws.Int64(100),
 	}
 
-	//x is the check to ensure there is no users left from the IsTruncated
-	x := true
-	for x {
+	for {
 		resp, err := svc.ListUsers(params)
 		if err != nil {
 			return nil, err
@@ -63,12 +61,11 @@ func GetProfileUsers(sess *session.Session) ([]iam.User, error) {
 		for _, user := range resp.Users {
 			users = append(users, *user)
 		}
-		//If it is truncated, add the marker to the params for the next loop
-		//If not, set x to false to exit for loop
+
 		if *resp.IsTruncated {
 			params.Marker = resp.Marker
 		} else {
-			x = false
+			break
 		}
 	}
 
@@ -83,9 +80,7 @@ func GetProfileAccountAuthInfo(sess *session.Session) ([]iam.GroupDetail, []iam.
 		MaxItems: aws.Int64(100),
 	}
 
-	//x is the check to ensure there is no users left from the IsTruncated
-	x := true
-	for x {
+	for {
 		resp, err := svc.GetAccountAuthorizationDetails(params)
 		if err != nil {
 			return nil, nil, err
@@ -96,19 +91,18 @@ func GetProfileAccountAuthInfo(sess *session.Session) ([]iam.GroupDetail, []iam.
 		for _, user := range resp.UserDetailList {
 			userInfo = append(userInfo, *user)
 		}
-		//If it is truncated, add the marker to the params for the next loop
-		//If not, set x to false to exit for loop
+
 		if *resp.IsTruncated {
 			params.Marker = resp.Marker
 		} else {
-			x = false
+			break
 		}
 	}
 
 	return groupInfo, userInfo, nil
 }
 
-//GetProfilesUsers will get all of the users in all given accounts
+// GetProfilesUsers will get all of the users in all given accounts
 func GetProfilesUsers(accounts []utils.AccountInfo) (ProfilesUsers, error) {
 	profilesUsersChan := make(chan ProfileUsers)
 	var wg sync.WaitGroup
@@ -119,7 +113,7 @@ func GetProfilesUsers(accounts []utils.AccountInfo) (ProfilesUsers, error) {
 			fmt.Println("Getting users for profile:", account.Profile)
 			defer wg.Done()
 			var profileUsers ProfileUsers
-			sess, err := account.GetSession()
+			sess, err := account.GetSession("us-east-1")
 			if err != nil {
 				log.Println("Could not get users for", account.Profile, ":", err)
 				return
